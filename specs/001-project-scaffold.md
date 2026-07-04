@@ -1,6 +1,6 @@
 # Spec 001: Project scaffold
 
-**Status:** draft
+**Status:** built (verified 2026-07-03)
 
 ## What
 
@@ -22,6 +22,7 @@ keeps a 7-year-old's faith that this is real.
 
 ## Acceptance criteria
 
-- [ ] `npm run dev` opens a page with a colored box on a ground line
-- [ ] Left/right arrows move the box; it falls with gravity if driven off a ledge
-- [ ] `npm run build` succeeds
+- [x] `npm run dev` opens a page with a colored box on a ground line
+- [x] Left/right arrows move the box; it falls with gravity if driven off a ledge
+      (bonus: falling off respawns the box at the start)
+- [x] `npm run build` succeeds
