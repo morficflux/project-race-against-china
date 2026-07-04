@@ -1,0 +1,120 @@
+import Phaser from 'phaser';
+import { TUNABLES } from '../config';
+
+const WHEEL_OFFSET_X = 42;
+const WHEEL_OFFSET_Y = 38;
+const WHEEL_RADIUS = 22;
+const MAX_FLIP_SPIN = 0.35;
+const UPSIDE_DOWN_RESCUE_MS = 2000;
+
+export class Car {
+  readonly chassis: Phaser.Physics.Matter.Sprite;
+  private wheels: Phaser.Physics.Matter.Sprite[];
+  private groundedFrames = 0;
+  private upsideDownMs = 0;
+
+  constructor(scene: Phaser.Scene, x: number, y: number) {
+    // Negative group: chassis and wheels never collide with each other.
+    const group = scene.matter.world.nextGroup(true);
+
+    this.chassis = scene.matter.add.sprite(x, y, 'chassis');
+    this.chassis.setBody({ type: 'rectangle', width: 120, height: 50 });
+    this.chassis.setCollisionGroup(group);
+    this.chassis.setFriction(0.3);
+    this.chassis.setMass(8);
+
+    this.wheels = [-WHEEL_OFFSET_X, WHEEL_OFFSET_X].map((offsetX) => {
+      const wheel = scene.matter.add.sprite(x + offsetX, y + WHEEL_OFFSET_Y, 'wheel');
+      wheel.setCircle(WHEEL_RADIUS);
+      wheel.setCollisionGroup(group);
+      wheel.setFriction(TUNABLES.wheelGrip);
+      wheel.setMass(2);
+
+      // Two anchors per wheel triangulate it: the springs stretch vertically
+      // (suspension) but the wheel can't swing back and forth under the car.
+      for (const anchorX of [offsetX - 18, offsetX + 18]) {
+        const restLength = Math.hypot(offsetX - anchorX, WHEEL_OFFSET_Y - 12);
+        scene.matter.add.constraint(
+          this.chassis.body as MatterJS.BodyType,
+          wheel.body as MatterJS.BodyType,
+          restLength,
+          TUNABLES.suspensionBounce,
+          { pointA: { x: anchorX, y: 12 }, damping: 0.08 },
+        );
+      }
+      return wheel;
+    });
+
+    scene.matter.world.on(
+      'collisionactive',
+      (event: Phaser.Physics.Matter.Events.CollisionActiveEvent) => {
+        for (const pair of event.pairs) {
+          if (
+            this.wheels.some((w) => w.body === pair.bodyA || w.body === pair.bodyB)
+          ) {
+            this.groundedFrames = 4;
+          }
+        }
+      },
+    );
+  }
+
+  get isOnGround(): boolean {
+    return this.groundedFrames > 0;
+  }
+
+  update(cursors: Phaser.Types.Input.Keyboard.CursorKeys, delta: number): void {
+    const onGround = this.isOnGround;
+    if (this.groundedFrames > 0) this.groundedFrames--;
+
+    const throttle = cursors.right.isDown ? 1 : cursors.left.isDown ? -1 : 0;
+
+    if (throttle !== 0) {
+      // Drive by spinning the wheels — traction comes from tire friction.
+      for (const wheel of this.wheels) {
+        const body = wheel.body as MatterJS.BodyType;
+        const target = throttle * TUNABLES.engineSpeed;
+        wheel.setAngularVelocity(
+          body.angularVelocity + (target - body.angularVelocity) * 0.2,
+        );
+      }
+
+      // Airborne: arrows gently spin the whole car for flips.
+      if (!onGround) {
+        const body = this.chassis.body as MatterJS.BodyType;
+        const spun = body.angularVelocity + throttle * 0.006 * TUNABLES.flipSpin;
+        this.chassis.setAngularVelocity(
+          Phaser.Math.Clamp(spun, -MAX_FLIP_SPIN, MAX_FLIP_SPIN),
+        );
+      }
+    }
+
+    // Stuck tipped past ~60° (nose-stand, roof) and not moving? Pop upright.
+    const tilt = Phaser.Math.Angle.Wrap(this.chassis.rotation);
+    const speed = (this.chassis.body as MatterJS.BodyType).speed;
+    if (Math.abs(tilt) > 1.0 && speed < 1.5) {
+      this.upsideDownMs += delta;
+    } else {
+      this.upsideDownMs = 0;
+    }
+    if (this.upsideDownMs > UPSIDE_DOWN_RESCUE_MS) {
+      this.reset(this.chassis.x, this.chassis.y - 70);
+    }
+  }
+
+  reset(x: number, y: number): void {
+    this.upsideDownMs = 0;
+    this.groundedFrames = 0;
+    this.chassis.setPosition(x, y);
+    this.chassis.setVelocity(0, 0);
+    this.chassis.setRotation(0);
+    this.chassis.setAngularVelocity(0);
+    this.wheels.forEach((wheel, i) => {
+      const offsetX = i === 0 ? -WHEEL_OFFSET_X : WHEEL_OFFSET_X;
+      wheel.setPosition(x + offsetX, y + WHEEL_OFFSET_Y);
+      wheel.setVelocity(0, 0);
+      wheel.setRotation(0);
+      wheel.setAngularVelocity(0);
+    });
+  }
+}

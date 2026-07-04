@@ -1,6 +1,6 @@
 # Spec 002: Car with real physics
 
-**Status:** draft
+**Status:** built (verified 2026-07-03; Milton's tunable test pending)
 
 ## What
 
@@ -30,7 +30,8 @@ flipping — Matter can, and it ships inside Phaser.
 
 ## Acceptance criteria
 
-- [ ] Car drives over a bumpy ground without getting stuck
-- [ ] Car leaves the ground off a ramp and can backflip
-- [ ] Landing upside down doesn't soft-lock the game
+- [x] Car drives over a bumpy ground without getting stuck
+- [x] Car leaves the ground off a ramp and can backflip
+- [x] Landing upside down doesn't soft-lock the game
+      (rescue now covers nose-stands too, not just full roof landings)
 - [ ] Milton has adjusted at least one tunable and seen the change live
