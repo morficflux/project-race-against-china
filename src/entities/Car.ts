@@ -67,11 +67,10 @@ export class Car {
     return this.groundedFrames > 0;
   }
 
-  update(cursors: Phaser.Types.Input.Keyboard.CursorKeys, delta: number): void {
+  /** throttle: -1 (reverse), 0, 1 (gas) — from keyboard, touch, or gamepad. */
+  update(throttle: number, delta: number): void {
     const onGround = this.isOnGround;
     if (this.groundedFrames > 0) this.groundedFrames--;
-
-    const throttle = cursors.right.isDown ? 1 : cursors.left.isDown ? -1 : 0;
 
     if (throttle !== 0) {
       // Drive by spinning the wheels — traction comes from tire friction.

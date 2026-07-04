@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Car } from '../entities/Car';
 import { Destructible } from '../entities/Destructible';
+import { TouchControls } from '../ui/TouchControls';
 import { LEVEL1 } from '../levels/level1';
 
 const START = { x: 200, y: 520 };
@@ -16,6 +17,7 @@ export class RaceScene extends Phaser.Scene {
   private raceStartMs: number | null = null;
   private finishTimeS: string | null = null;
   private won = false;
+  private touch: TouchControls | null = null;
 
   constructor() {
     super('race');
@@ -34,6 +36,7 @@ export class RaceScene extends Phaser.Scene {
     this.car = new Car(this, START.x, START.y);
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.input.keyboard!.on('keydown-R', () => this.scene.restart());
+    this.setUpTouch();
 
     this.destructibles.clear();
     for (const [x, y] of LEVEL1.crates) {
@@ -65,10 +68,14 @@ export class RaceScene extends Phaser.Scene {
     this.cameras.main.setFollowOffset(-200, 0); // look ahead of the car
 
     this.add
-      .text(640, 60, '← → to drive · in the air: ← → to flip · R restarts', {
-        fontSize: '24px',
-        color: '#1b1b24',
-      })
+      .text(
+        640,
+        60,
+        this.touch
+          ? 'hold ▶ to drive · in the air: ◀ ▶ to flip'
+          : '← → to drive · in the air: ← → to flip · R restarts',
+        { fontSize: '24px', color: '#1b1b24' },
+      )
       .setOrigin(0.5)
       .setScrollFactor(0);
 
@@ -79,6 +86,38 @@ export class RaceScene extends Phaser.Scene {
         fontStyle: 'bold',
       })
       .setScrollFactor(0);
+  }
+
+  private setUpTouch(): void {
+    if (!this.sys.game.device.input.touch) return;
+    this.touch = new TouchControls(this);
+
+    // Get the browser chrome out of the way on the first tap (where allowed).
+    this.input.once('pointerup', () => {
+      if (!this.scale.isFullscreen) {
+        try {
+          this.scale.startFullscreen();
+        } catch {
+          /* iOS Safari says no — fine */
+        }
+      }
+    });
+
+    // A side-scroller in portrait is a postage stamp.
+    const nudge = this.add
+      .text(640, 200, '🔄 turn your phone sideways!', {
+        fontSize: '44px',
+        color: '#1b1b24',
+        backgroundColor: '#ffffff',
+        padding: { x: 20, y: 12 },
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(60)
+      .setVisible(this.scale.orientation === Phaser.Scale.Orientation.PORTRAIT);
+    this.scale.on('orientationchange', (o: Phaser.Scale.Orientation) => {
+      nudge.setVisible(o === Phaser.Scale.Orientation.PORTRAIT);
+    });
   }
 
   private plantFlag(x: number, label: string): void {
@@ -148,17 +187,27 @@ export class RaceScene extends Phaser.Scene {
       )
       .setOrigin(0.5)
       .setScrollFactor(0);
+
+    // On touch screens: tap anywhere to race again (armed after a beat so
+    // a thumb still on the gas doesn't instantly restart).
+    this.time.delayedCall(800, () => {
+      this.input.once('pointerdown', () => this.scene.restart());
+    });
+  }
+
+  /** Combined throttle from keyboard and touch; last one pressed wins. */
+  private throttle(): number {
+    const kb = this.cursors.right.isDown ? 1 : this.cursors.left.isDown ? -1 : 0;
+    return kb !== 0 ? kb : (this.touch?.throttle ?? 0);
   }
 
   update(time: number, delta: number): void {
     if (!this.won) {
-      this.car.update(this.cursors, delta);
+      const throttle = this.throttle();
+      this.car.update(throttle, delta);
 
       // The clock starts the first time you touch the throttle.
-      if (
-        this.raceStartMs === null &&
-        (this.cursors.left.isDown || this.cursors.right.isDown)
-      ) {
+      if (this.raceStartMs === null && throttle !== 0) {
         this.raceStartMs = time;
       }
 

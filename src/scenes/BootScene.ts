@@ -19,9 +19,6 @@ export class BootScene extends Phaser.Scene {
       this.load.image(key, `sprites/${file}`);
     }
     // Missing files just log a 404 and fall through to the placeholders.
-
-    // Milton can record a victory sound: save it as public/audio/win.mp3
-    this.load.audio('win', 'audio/win.mp3');
   }
 
   create(): void {
@@ -72,6 +69,19 @@ export class BootScene extends Phaser.Scene {
     }
 
     g.destroy();
+
+    // Milton can record a victory sound: save it as public/audio/win.mp3.
+    // Only load it if it actually exists — a 404 fed to the audio decoder
+    // throws; a quiet check keeps the console clean.
+    fetch('audio/win.mp3', { method: 'HEAD' })
+      .then((r) => {
+        if (r.ok && r.headers.get('content-type')?.startsWith('audio')) {
+          this.load.audio('win', 'audio/win.mp3');
+          this.load.start();
+        }
+      })
+      .catch(() => {});
+
     this.scene.start('race');
   }
 }
