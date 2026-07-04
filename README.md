@@ -15,6 +15,15 @@ numbered in build order.
 - `specs/` — one file per feature, numbered
 - Specs use status: `draft` → `approved` (Milton signs off) → `built` → `verified`
 
+## Roadmap
+
+- **v1 (done!)** — specs 001–005: scaffold, physics car, art pipeline,
+  destructible crates, finish line & win screen. All Milton-drawn.
+- **v2** — specs 006–009: ship it online, juice (shake/freeze/engine),
+  the recording booth (Milton makes every sound), gamepad support
+- **v3** — specs 010–012: Milton-designed level 2 + level picker, pickups,
+  destruction tiers 2–3 (cracking walls, collapsing towers)
+
 ## Tech stack
 
 - **[Phaser 3](https://phaser.io/)** — the game engine (renders sprites, handles input, scenes, camera)
