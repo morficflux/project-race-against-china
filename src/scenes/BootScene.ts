@@ -68,6 +68,13 @@ export class BootScene extends Phaser.Scene {
       g.generateTexture('flag', 60, 40);
     }
 
+    // Dust puff for wheel spin (always generated — it's a soft blob).
+    g.fillStyle(0xcbb794, 0.9);
+    g.fillCircle(6, 6, 6);
+    g.fillStyle(0xe0d3b8, 0.7);
+    g.fillCircle(4, 4, 3);
+    g.generateTexture('dust', 12, 12);
+
     g.destroy();
 
     // Milton can record a victory sound: save it as public/audio/win.mp3.

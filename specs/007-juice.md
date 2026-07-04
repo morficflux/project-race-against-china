@@ -1,6 +1,7 @@
 # Spec 007: Juice — make smashing FEEL smashing (v2)
 
-**Status:** draft
+**Status:** built (verified headless 2026-07-04; engine is a procedural
+placeholder until Milton's recording in spec 008)
 
 ## What
 
@@ -25,7 +26,8 @@ makes people grin when a crate explodes.
 
 ## Acceptance criteria
 
-- [ ] Smashing a crate shakes the screen and hiccups time — noticeably
-- [ ] Dust kicks up when accelerating; none when airborne
-- [ ] Engine note rises and falls with speed
+- [x] Smashing a crate shakes the screen and hiccups time — noticeably
+      (shake scaled to impact speed; 45ms physics freeze observed live)
+- [x] Dust kicks up when accelerating; none when airborne (grounded-only gate)
+- [x] Engine note rises and falls with speed (50→119 Hz measured while driving)
 - [ ] Milton has set shakeAmount to his liking (expect: maximum)

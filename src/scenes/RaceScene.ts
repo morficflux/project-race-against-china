@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { Car } from '../entities/Car';
 import { Destructible } from '../entities/Destructible';
 import { TouchControls } from '../ui/TouchControls';
+import { EngineSound } from '../systems/EngineSound';
+import { TUNABLES } from '../config';
 import { LEVEL1 } from '../levels/level1';
 
 const START = { x: 200, y: 520 };
@@ -18,6 +20,8 @@ export class RaceScene extends Phaser.Scene {
   private finishTimeS: string | null = null;
   private won = false;
   private touch: TouchControls | null = null;
+  private dust!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private engine!: EngineSound;
 
   constructor() {
     super('race');
@@ -61,7 +65,37 @@ export class RaceScene extends Phaser.Scene {
     );
     // (off first: the scene emitter survives restarts, the listener shouldn't stack)
     this.events.off('smashed');
-    this.events.on('smashed', () => this.smashed++);
+    this.events.on('smashed', (impact: number) => {
+      this.smashed++;
+      // JUICE: screen shake sized to the hit, plus a blink of frozen time.
+      const strength =
+        Phaser.Math.Clamp(impact / 12, 0.4, 1.5) * TUNABLES.shakeAmount;
+      this.cameras.main.shake(150, 0.004 * strength);
+      this.matter.world.enabled = false;
+      this.time.delayedCall(45, () => {
+        this.matter.world.enabled = true;
+      });
+    });
+
+    // Wheel dust (emitted manually from update while driving on the ground).
+    this.dust = this.add.particles(0, 0, 'dust', {
+      speed: { min: 25, max: 70 },
+      angle: { min: 180, max: 320 },
+      lifespan: { min: 250, max: 550 },
+      scale: { start: 1.4, end: 0 },
+      alpha: { start: 0.8, end: 0 },
+      frequency: -1,
+    });
+
+    // Engine hum — pitch follows the wheels. Starts once audio is unlocked.
+    const soundManager = this.sound as Phaser.Sound.WebAudioSoundManager;
+    this.engine = new EngineSound(soundManager.context ?? null);
+    if (this.sound.locked) {
+      this.sound.once(Phaser.Sound.Events.UNLOCKED, () => this.engine.start());
+    } else {
+      this.engine.start();
+    }
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.engine.stop());
 
     this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height);
     this.cameras.main.startFollow(this.car.chassis, false, 0.08, 0.08);
@@ -202,9 +236,17 @@ export class RaceScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    this.engine.update(this.won ? 0 : this.car.wheelSpin);
+
     if (!this.won) {
       const throttle = this.throttle();
       this.car.update(throttle, delta);
+
+      // Kick up dust while the tires are working the ground.
+      if (this.car.isOnGround && Math.abs(this.car.wheelSpin) > 0.15) {
+        const at = this.car.rearWheelContact;
+        this.dust.emitParticleAt(at.x, at.y, 1);
+      }
 
       // The clock starts the first time you touch the throttle.
       if (this.raceStartMs === null && throttle !== 0) {

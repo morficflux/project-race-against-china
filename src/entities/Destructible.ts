@@ -31,10 +31,10 @@ export class Destructible {
   }
 
   hit(impactSpeed: number): void {
-    if (!this.shattered && impactSpeed > TUNABLES.smashSpeed) this.shatter();
+    if (!this.shattered && impactSpeed > TUNABLES.smashSpeed) this.shatter(impactSpeed);
   }
 
-  private shatter(): void {
+  private shatter(impactSpeed = 0): void {
     this.shattered = true;
     const { x, y } = this.sprite;
     const vx = this.body.velocity.x;
@@ -81,6 +81,6 @@ export class Destructible {
     }
 
     this.sprite.destroy();
-    this.scene.events.emit('smashed');
+    this.scene.events.emit('smashed', impactSpeed);
   }
 }

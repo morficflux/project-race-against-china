@@ -14,4 +14,7 @@ export const TUNABLES = {
 
   // How fast you must be going to smash something. Lower = more explosions.
   smashSpeed: 6,
+
+  // How much the screen shakes when you smash. 0 = calm, 2 = earthquake.
+  shakeAmount: 1.0,
 };

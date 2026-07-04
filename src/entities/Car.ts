@@ -67,6 +67,17 @@ export class Car {
     return this.groundedFrames > 0;
   }
 
+  /** Signed wheel angular velocity (rad/step) — drives dust and engine pitch. */
+  get wheelSpin(): number {
+    return (this.wheels[0].body as MatterJS.BodyType).angularVelocity;
+  }
+
+  /** Where the rear tire meets the ground — dust spawns here. */
+  get rearWheelContact(): { x: number; y: number } {
+    const rear = this.wheels[0];
+    return { x: rear.x, y: rear.y + WHEEL_RADIUS * 0.8 };
+  }
+
   /** throttle: -1 (reverse), 0, 1 (gas) — from keyboard, touch, or gamepad. */
   update(throttle: number, delta: number): void {
     const onGround = this.isOnGround;
