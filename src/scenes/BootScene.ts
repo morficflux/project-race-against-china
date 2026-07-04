@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 const SPRITES: { key: string; file: string }[] = [
   { key: 'chassis', file: 'car.png' },
   { key: 'wheel', file: 'wheel.png' },
+  { key: 'crate', file: 'crate.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -41,6 +42,17 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x777777);
       g.fillCircle(22, 22, 6);
       g.generateTexture('wheel', 44, 44);
+    }
+
+    if (!this.textures.exists('crate')) {
+      // Wooden crate: planks and a cross-brace.
+      g.fillStyle(0xb5804a);
+      g.fillRect(0, 0, 80, 80);
+      g.lineStyle(6, 0x7a5230);
+      g.strokeRect(3, 3, 74, 74);
+      g.lineBetween(3, 3, 77, 77);
+      g.lineBetween(77, 3, 3, 77);
+      g.generateTexture('crate', 80, 80);
     }
 
     g.destroy();

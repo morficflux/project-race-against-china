@@ -1,6 +1,6 @@
 # Spec 004: Destructible sprites
 
-**Status:** draft
+**Status:** built (Tier 1 verified headless 2026-07-03; fps check on the family laptop pending)
 
 ## What
 
@@ -31,7 +31,11 @@ so gently touching a crate nudges it instead — obstacles are dynamic bodies.
 
 ## Acceptance criteria
 
-- [ ] Driving fast into a crate explodes it into pieces of Milton's own drawing
-- [ ] Driving slowly into it pushes it without breaking
+- [x] Driving fast into a crate explodes it into pieces of its own texture
+      (placeholder crate art for now — Milton: draw us a crate! It slots in
+      as public/sprites/crate.png and the pieces become his drawing)
+- [x] Driving slowly into it pushes it without breaking
+      (verified with a creep-speed approach in tools/verify-smash.mjs)
 - [ ] 10 simultaneous destructions don't drop below ~50fps on the family laptop
-- [ ] Pieces never pile up forever (despawn works)
+      (headless GPU-less run can't measure this fairly — test in real Chrome)
+- [x] Pieces never pile up forever (despawn works)

@@ -11,4 +11,7 @@ export const TUNABLES = {
 
   // How hard you can spin the car in mid-air for flips.
   flipSpin: 2.0,
+
+  // How fast you must be going to smash something. Lower = more explosions.
+  smashSpeed: 6,
 };

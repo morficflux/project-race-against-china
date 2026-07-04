@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { RaceScene } from './scenes/RaceScene';
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   width: 1280,
@@ -20,3 +20,6 @@ new Phaser.Game({
   },
   scene: [BootScene, RaceScene],
 });
+
+// Handle for the headless verification harness (tools/verify-smash.mjs).
+(window as unknown as { __game: Phaser.Game }).__game = game;

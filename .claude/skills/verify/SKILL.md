@@ -28,6 +28,22 @@ setTimeout(() => window.dispatchEvent(new KeyboardEvent('keyup', { ...same })), 
   ramp → airborne over the gap → landing runout. Screenshot at ~3.5s for
   mid-flight, ~9s for the settled result.
 
+## Headless verification (preferred — immune to the occlusion gotcha)
+
+```bash
+node tools/verify-smash.mjs http://localhost:<port>/ <screenshot-dir>
+```
+
+Playwright-core + system Chrome. `window.__game` (set in main.ts) exposes
+the Phaser instance for state assertions (`scene.children.list`, body
+speeds, `game.loop.actualFps`). Pattern for new checks: drive with
+`page.keyboard.down/up`, poll state, screenshot. Notes:
+- Headless is software-rendered: wall-clock progress is slower and fps
+  numbers are meaningless for the "smooth on the laptop" criteria.
+- To make gentle-contact tests work, regulate speed by reading
+  `body.speed` and tapping only below a threshold — blind key taps
+  accumulate way past smashSpeed.
+
 ## Gotchas
 
 - **Occluded Chrome window = frozen game.** If the Chrome window is
