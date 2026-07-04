@@ -1,6 +1,7 @@
 # Spec 008: The recording booth (v2)
 
-**Status:** draft
+**Status:** built (verified 2026-07-04 with a fake mic + generated sounds;
+awaiting Milton's real recordings)
 
 ## What
 
@@ -27,6 +28,8 @@ that's the product.
 ## Acceptance criteria
 
 - [ ] Milton can record → hear it → save it with no typing from Dad except
-      the filename
-- [ ] A saved crash sound plays when a crate smashes, win sound at the flag
-- [ ] Missing sounds never break the game
+      the filename (booth verified with a fake mic; needs the real Milton test)
+- [x] A saved crash sound plays when a crate smashes (pitch-jittered), the
+      engine loop's pitch follows the wheels, win sound at the flag
+- [x] Missing sounds never break the game (silent fallback + procedural
+      engine hum until his recordings land)

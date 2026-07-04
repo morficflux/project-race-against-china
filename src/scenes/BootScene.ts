@@ -76,19 +76,40 @@ export class BootScene extends Phaser.Scene {
     g.generateTexture('dust', 12, 12);
 
     g.destroy();
+    void this.loadMiltonsSounds();
+  }
 
-    // Milton can record a victory sound: save it as public/audio/win.mp3.
-    // Only load it if it actually exists — a 404 fed to the audio decoder
-    // throws; a quiet check keeps the console clean.
-    fetch('audio/win.mp3', { method: 'HEAD' })
-      .then((r) => {
-        if (r.ok && r.headers.get('content-type')?.startsWith('audio')) {
-          this.load.audio('win', 'audio/win.mp3');
-          this.load.start();
+  // Milton's sounds from the recording booth (/booth.html) live in
+  // public/audio/. Only files that actually exist get loaded — a 404 fed
+  // to the audio decoder throws. Missing sounds = silent fallbacks.
+  private async loadMiltonsSounds(): Promise<void> {
+    const names = ['engine', 'crash', 'win'];
+    const found: [string, string][] = [];
+    await Promise.all(
+      names.map(async (name) => {
+        for (const ext of ['webm', 'mp3', 'wav', 'ogg']) {
+          try {
+            const url = `audio/${name}.${ext}`;
+            const r = await fetch(url, { method: 'HEAD' });
+            const type = r.headers.get('content-type') ?? '';
+            if (r.ok && /audio|video|webm|ogg|mpeg|wave|octet/.test(type)) {
+              found.push([name, url]);
+              return;
+            }
+          } catch {
+            /* offline or blocked — placeholders it is */
+          }
         }
-      })
-      .catch(() => {});
+      }),
+    );
 
-    this.scene.start('race');
+    if (found.length === 0) {
+      this.scene.start('race');
+      return;
+    }
+    for (const [key, url] of found) this.load.audio(key, url);
+    this.load.once('complete', () => this.scene.start('race'));
+    this.load.once('loaderror', () => this.scene.start('race'));
+    this.load.start();
   }
 }

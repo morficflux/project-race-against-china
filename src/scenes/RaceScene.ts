@@ -21,7 +21,8 @@ export class RaceScene extends Phaser.Scene {
   private won = false;
   private touch: TouchControls | null = null;
   private dust!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private engine!: EngineSound;
+  private engine: EngineSound | null = null;
+  private engineLoop: Phaser.Sound.WebAudioSound | null = null;
 
   constructor() {
     super('race');
@@ -75,6 +76,13 @@ export class RaceScene extends Phaser.Scene {
       this.time.delayedCall(45, () => {
         this.matter.world.enabled = true;
       });
+      // Milton's crash sound, pitch-jittered so six crates don't sound cloned.
+      if (this.cache.audio.exists('crash')) {
+        this.sound.play('crash', {
+          detune: Phaser.Math.Between(-150, 250),
+          volume: 0.8,
+        });
+      }
     });
 
     // Wheel dust (emitted manually from update while driving on the ground).
@@ -87,15 +95,31 @@ export class RaceScene extends Phaser.Scene {
       frequency: -1,
     });
 
-    // Engine hum — pitch follows the wheels. Starts once audio is unlocked.
-    const soundManager = this.sound as Phaser.Sound.WebAudioSoundManager;
-    this.engine = new EngineSound(soundManager.context ?? null);
-    if (this.sound.locked) {
-      this.sound.once(Phaser.Sound.Events.UNLOCKED, () => this.engine.start());
+    // Engine — Milton's recorded loop if he's made one (rate = pitch),
+    // otherwise the procedural hum. Starts once audio is unlocked.
+    const whenUnlocked = (start: () => void) => {
+      if (this.sound.locked) {
+        this.sound.once(Phaser.Sound.Events.UNLOCKED, start);
+      } else {
+        start();
+      }
+    };
+    if (this.cache.audio.exists('engine')) {
+      this.engineLoop = this.sound.add('engine', {
+        loop: true,
+        volume: 0,
+      }) as Phaser.Sound.WebAudioSound;
+      whenUnlocked(() => this.engineLoop!.play());
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () =>
+        this.engineLoop?.destroy(),
+      );
     } else {
-      this.engine.start();
+      const soundManager = this.sound as Phaser.Sound.WebAudioSoundManager;
+      const engine = new EngineSound(soundManager.context ?? null);
+      this.engine = engine;
+      whenUnlocked(() => engine.start());
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => engine.stop());
     }
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.engine.stop());
 
     this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height);
     this.cameras.main.startFollow(this.car.chassis, false, 0.08, 0.08);
@@ -236,7 +260,12 @@ export class RaceScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
-    this.engine.update(this.won ? 0 : this.car.wheelSpin);
+    const spin = this.won ? 0 : Math.abs(this.car.wheelSpin);
+    if (this.engineLoop?.isPlaying) {
+      this.engineLoop.setRate(0.6 + spin * 0.6);
+      this.engineLoop.setVolume(spin > 0.03 ? 0.5 : 0.12);
+    }
+    this.engine?.update(spin);
 
     if (!this.won) {
       const throttle = this.throttle();

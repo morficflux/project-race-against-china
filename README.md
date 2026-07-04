@@ -57,6 +57,9 @@ npm install
 npm run dev     # open the printed localhost URL
 ```
 
+Play online: https://morficflux.github.io/project-race-against-china/
+Record sounds: add `/booth.html` to either URL — Milton's recording booth.
+
 ## The art pipeline (short version)
 
 1. Milton draws on white paper with dark outlines
