@@ -6,6 +6,7 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'chassis', file: 'car.png' },
   { key: 'wheel', file: 'wheel.png' },
   { key: 'crate', file: 'crate.png' },
+  { key: 'flag', file: 'flag.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -18,6 +19,9 @@ export class BootScene extends Phaser.Scene {
       this.load.image(key, `sprites/${file}`);
     }
     // Missing files just log a 404 and fall through to the placeholders.
+
+    // Milton can record a victory sound: save it as public/audio/win.mp3
+    this.load.audio('win', 'audio/win.mp3');
   }
 
   create(): void {
@@ -53,6 +57,18 @@ export class BootScene extends Phaser.Scene {
       g.lineBetween(3, 3, 77, 77);
       g.lineBetween(77, 3, 3, 77);
       g.generateTexture('crate', 80, 80);
+    }
+
+    if (!this.textures.exists('flag')) {
+      // Checkered racing flag.
+      const sq = 10;
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 6; c++) {
+          g.fillStyle((r + c) % 2 === 0 ? 0x111111 : 0xffffff);
+          g.fillRect(c * sq, r * sq, sq, sq);
+        }
+      }
+      g.generateTexture('flag', 60, 40);
     }
 
     g.destroy();

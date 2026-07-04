@@ -31,9 +31,8 @@ so gently touching a crate nudges it instead — obstacles are dynamic bodies.
 
 ## Acceptance criteria
 
-- [x] Driving fast into a crate explodes it into pieces of its own texture
-      (placeholder crate art for now — Milton: draw us a crate! It slots in
-      as public/sprites/crate.png and the pieces become his drawing)
+- [x] Driving fast into a crate explodes it into pieces of Milton's own
+      drawing (his crayon crate landed 2026-07-04 — verified)
 - [x] Driving slowly into it pushes it without breaking
       (verified with a creep-speed approach in tools/verify-smash.mjs)
 - [ ] 10 simultaneous destructions don't drop below ~50fps on the family laptop

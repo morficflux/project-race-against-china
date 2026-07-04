@@ -1,60 +1,42 @@
 import Phaser from 'phaser';
 import { Car } from '../entities/Car';
 import { Destructible } from '../entities/Destructible';
+import { LEVEL1 } from '../levels/level1';
 
 const START = { x: 200, y: 520 };
-
-// Things to smash: [x, y they drop in from]. A tower awaits past the gap.
-const CRATES: [number, number][] = [
-  [700, 600],
-  [1250, 600],
-  [2450, 660],
-  [2450, 580],
-  [2510, 660],
-  [2480, 500],
-];
 const WORLD = { width: 3400, height: 1000 };
 const GROUND_THICKNESS = 40;
-
-// Ground is a chain of [x, top-of-ground y] points; null makes a gap.
-// Bumps, then a ramp up, a gap to fly over, and a landing runout.
-type GroundPoint = [number, number] | null;
-const GROUND: GroundPoint[] = [
-  [0, 700],
-  [300, 700],
-  [500, 680],
-  [650, 710],
-  [800, 685],
-  [950, 705],
-  [1100, 695],
-  [1400, 700],
-  [1750, 580],
-  null,
-  [1900, 760],
-  [2400, 740],
-  [2700, 700],
-  [3000, 690],
-  [3400, 700],
-];
 
 export class RaceScene extends Phaser.Scene {
   private car!: Car;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private destructibles = new Map<number, Destructible>();
   private smashed = 0;
+  private hud!: Phaser.GameObjects.Text;
+  private raceStartMs: number | null = null;
+  private finishTimeS: string | null = null;
+  private won = false;
 
   constructor() {
     super('race');
   }
 
   create(): void {
+    this.won = false;
+    this.raceStartMs = null;
+    this.finishTimeS = null;
+    this.smashed = 0;
+
     this.buildGround();
+    this.plantFlag(START.x - 120, 'START');
+    this.plantFlag(LEVEL1.finishX, 'FINISH');
+
     this.car = new Car(this, START.x, START.y);
     this.cursors = this.input.keyboard!.createCursorKeys();
+    this.input.keyboard!.on('keydown-R', () => this.scene.restart());
 
     this.destructibles.clear();
-    this.smashed = 0;
-    for (const [x, y] of CRATES) {
+    for (const [x, y] of LEVEL1.crates) {
       const crate = new Destructible(this, x, y, 'crate');
       this.destructibles.set(crate.body.id, crate);
     }
@@ -80,20 +62,54 @@ export class RaceScene extends Phaser.Scene {
 
     this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height);
     this.cameras.main.startFollow(this.car.chassis, false, 0.08, 0.08);
+    this.cameras.main.setFollowOffset(-200, 0); // look ahead of the car
 
     this.add
-      .text(640, 60, '← → to drive · in the air: ← → to flip', {
-        fontSize: '28px',
+      .text(640, 60, '← → to drive · in the air: ← → to flip · R restarts', {
+        fontSize: '24px',
         color: '#1b1b24',
       })
       .setOrigin(0.5)
       .setScrollFactor(0);
+
+    this.hud = this.add
+      .text(20, 20, 'time 0.0s   smashed 0', {
+        fontSize: '28px',
+        color: '#1b1b24',
+        fontStyle: 'bold',
+      })
+      .setScrollFactor(0);
+  }
+
+  private plantFlag(x: number, label: string): void {
+    const groundY = this.groundYAt(x);
+    this.add.rectangle(x, groundY - 60, 6, 120, 0x333333); // pole
+    this.add.image(x + 33, groundY - 100, 'flag').setDisplaySize(60, 40);
+    this.add
+      .text(x, groundY - 140, label, { fontSize: '20px', color: '#1b1b24' })
+      .setOrigin(0.5);
+  }
+
+  /** Top-of-ground y at x, interpolated from the level's ground chain. */
+  private groundYAt(x: number): number {
+    const pts = LEVEL1.ground;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      if (!a || !b) continue;
+      if (x >= a[0] && x <= b[0]) {
+        const t = (x - a[0]) / (b[0] - a[0]);
+        return a[1] + (b[1] - a[1]) * t;
+      }
+    }
+    return 700;
   }
 
   private buildGround(): void {
-    for (let i = 0; i < GROUND.length - 1; i++) {
-      const a = GROUND[i];
-      const b = GROUND[i + 1];
+    const pts = LEVEL1.ground;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
       if (!a || !b) continue;
 
       const [x1, y1] = a;
@@ -114,10 +130,48 @@ export class RaceScene extends Phaser.Scene {
     }
   }
 
-  update(_time: number, delta: number): void {
-    this.car.update(this.cursors, delta);
+  private finish(time: number): void {
+    this.won = true;
+    this.finishTimeS = ((time - (this.raceStartMs ?? time)) / 1000).toFixed(1);
+    if (this.cache.audio.exists('win')) this.sound.play('win');
 
-    // Fell in a pit or off the world: respawn at the start.
+    this.add
+      .rectangle(640, 330, 720, 260, 0xffffff, 0.92)
+      .setScrollFactor(0)
+      .setStrokeStyle(6, 0x1b1b24);
+    this.add
+      .text(
+        640,
+        330,
+        `🏁 YOU WIN! 🏁\n\ntime ${this.finishTimeS}s\nsmashed ${this.smashed} things\n\npress R to race again`,
+        { fontSize: '34px', color: '#1b1b24', align: 'center' },
+      )
+      .setOrigin(0.5)
+      .setScrollFactor(0);
+  }
+
+  update(time: number, delta: number): void {
+    if (!this.won) {
+      this.car.update(this.cursors, delta);
+
+      // The clock starts the first time you touch the throttle.
+      if (
+        this.raceStartMs === null &&
+        (this.cursors.left.isDown || this.cursors.right.isDown)
+      ) {
+        this.raceStartMs = time;
+      }
+
+      const elapsed =
+        this.raceStartMs === null ? 0 : (time - this.raceStartMs) / 1000;
+      this.hud.setText(
+        `time ${elapsed.toFixed(1)}s   smashed ${this.smashed}`,
+      );
+
+      if (this.car.chassis.x >= LEVEL1.finishX) this.finish(time);
+    }
+
+    // Fell in a pit or off the world: respawn at the start (clock keeps running).
     if (this.car.chassis.y > WORLD.height + 200) {
       this.car.reset(START.x, START.y);
     }

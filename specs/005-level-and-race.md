@@ -1,6 +1,6 @@
 # Spec 005: Level, camera, and winning
 
-**Status:** draft
+**Status:** built (verified headless 2026-07-04)
 
 ## What
 
@@ -27,6 +27,8 @@ Turns a physics toy into a *game* — the Definition of Done in spec 000.
 
 ## Acceptance criteria
 
-- [ ] Level is beatable start-to-finish; falling in a pit respawns you at start
+- [x] Level is beatable start-to-finish; falling in a pit respawns you at start
 - [ ] Milton has placed at least one obstacle by editing the level file
-- [ ] Win screen shows time and smash count; R restarts instantly
+      (the file is ready for him: src/levels/level1.ts)
+- [x] Win screen shows time and smash count; R restarts instantly
+      (win sound slot ready too: record one and save as public/audio/win.mp3)
