@@ -1,6 +1,6 @@
 # Spec 002: Car with real physics
 
-**Status:** built (verified 2026-07-03; Milton's tunable test pending)
+**Status:** verified 2026-07-03
 
 ## What
 
@@ -34,4 +34,4 @@ flipping — Matter can, and it ships inside Phaser.
 - [x] Car leaves the ground off a ramp and can backflip
 - [x] Landing upside down doesn't soft-lock the game
       (rescue now covers nose-stands too, not just full roof landings)
-- [ ] Milton has adjusted at least one tunable and seen the change live
+- [x] Milton has adjusted at least one tunable and seen the change live

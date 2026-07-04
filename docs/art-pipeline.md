@@ -24,12 +24,14 @@ Pick one:
 - **Photopea** (photopea.com, free, no install): Magic Wand → click the white
   background → Delete → File → Export As → PNG
 - **remove.bg**: upload, download — fastest, works great on marker drawings
-- **Script** (once we're doing this weekly), from repo root:
+- **Our script** (fastest, no upload), from repo root:
   ```bash
-  ./tools/paper2sprite.sh art/inbox/2026-07-03-red-car.jpg red-car
-  # crops, removes white (imagemagick -fuzz 15% -transparent white),
-  # trims, resizes, writes public/sprites/red-car.png
+  npm run sprite -- art/inbox/2026-07-03-red-car.jpg car 256
+  # trims the paper border, turns white transparent, resizes,
+  # writes public/sprites/car.png — refresh the game and it's in
   ```
+  No real drawing handy? `node tools/make-test-drawing.mjs art/inbox/test.jpg`
+  fakes one so you can rehearse the pipeline.
 
 ## 4. Size guide
 

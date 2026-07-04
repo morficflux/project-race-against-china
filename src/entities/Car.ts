@@ -22,11 +22,15 @@ export class Car {
     this.chassis.setCollisionGroup(group);
     this.chassis.setFriction(0.3);
     this.chassis.setMass(8);
+    // Milton's drawing can be any size — scale the picture to cover the body.
+    const art = this.chassis.texture.getSourceImage();
+    this.chassis.setDisplaySize(140, (140 * art.height) / art.width);
 
     this.wheels = [-WHEEL_OFFSET_X, WHEEL_OFFSET_X].map((offsetX) => {
       const wheel = scene.matter.add.sprite(x + offsetX, y + WHEEL_OFFSET_Y, 'wheel');
       wheel.setCircle(WHEEL_RADIUS);
       wheel.setCollisionGroup(group);
+      wheel.setDisplaySize(WHEEL_RADIUS * 2, WHEEL_RADIUS * 2);
       wheel.setFriction(TUNABLES.wheelGrip);
       wheel.setMass(2);
 
