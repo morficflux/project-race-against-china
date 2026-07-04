@@ -1,6 +1,7 @@
 # Spec 006: Ship it online (v2)
 
-**Status:** draft
+**Status:** built (verified live 2026-07-04)
+**URL:** https://morficflux.github.io/project-race-against-china/
 
 ## What
 
@@ -22,6 +23,9 @@ play with just a link. Biggest feel-upgrade per hour of work in v2.
 
 ## Acceptance criteria
 
-- [ ] A phone or laptop anywhere can play the game at the public URL
-- [ ] Pushing to main updates the live game with no manual steps
+- [x] A phone or laptop anywhere can play the game at the public URL
+      (drove the live site headless: car drives, crate shattered into 6
+      shards, Milton's art loads)
+- [x] Pushing to main updates the live game with no manual steps
+      (this very push built and deployed itself via Actions)
 - [ ] Milton has sent the link to at least one person
