@@ -7,6 +7,7 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'wheel', file: 'wheel.png' },
   { key: 'crate', file: 'crate.png' },
   { key: 'flag', file: 'flag.png' },
+  { key: 'title', file: 'title.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -104,12 +105,12 @@ export class BootScene extends Phaser.Scene {
     );
 
     if (found.length === 0) {
-      this.scene.start('race');
+      this.scene.start('menu');
       return;
     }
     for (const [key, url] of found) this.load.audio(key, url);
-    this.load.once('complete', () => this.scene.start('race'));
-    this.load.once('loaderror', () => this.scene.start('race'));
+    this.load.once('complete', () => this.scene.start('menu'));
+    this.load.once('loaderror', () => this.scene.start('menu'));
     this.load.start();
   }
 }

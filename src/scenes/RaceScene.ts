@@ -4,10 +4,10 @@ import { Destructible } from '../entities/Destructible';
 import { TouchControls } from '../ui/TouchControls';
 import { EngineSound } from '../systems/EngineSound';
 import { TUNABLES } from '../config';
-import { LEVEL1 } from '../levels/level1';
+import { LEVELS, type LevelDef } from '../levels';
 
 const START = { x: 200, y: 520 };
-const WORLD = { width: 3400, height: 1000 };
+const WORLD_HEIGHT = 1000;
 const GROUND_THICKNESS = 40;
 
 export class RaceScene extends Phaser.Scene {
@@ -24,8 +24,21 @@ export class RaceScene extends Phaser.Scene {
   private engine: EngineSound | null = null;
   private engineLoop: Phaser.Sound.WebAudioSound | null = null;
 
+  private level: LevelDef = LEVELS[0];
+
   constructor() {
     super('race');
+  }
+
+  init(data: { levelIndex?: number }): void {
+    this.level = LEVELS[data.levelIndex ?? 0] ?? LEVELS[0];
+  }
+
+  /** Rightmost ground point = how wide this level's world is. */
+  private worldWidth(): number {
+    let max = 1280;
+    for (const p of this.level.ground) if (p && p[0] > max) max = p[0];
+    return max;
   }
 
   create(): void {
@@ -36,15 +49,16 @@ export class RaceScene extends Phaser.Scene {
 
     this.buildGround();
     this.plantFlag(START.x - 120, 'START');
-    this.plantFlag(LEVEL1.finishX, 'FINISH');
+    this.plantFlag(this.level.finishX, 'FINISH');
 
     this.car = new Car(this, START.x, START.y);
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.input.keyboard!.on('keydown-R', () => this.scene.restart());
+    this.input.keyboard!.on('keydown-M', () => this.scene.start('menu'));
     this.setUpTouch();
 
     this.destructibles.clear();
-    for (const [x, y] of LEVEL1.crates) {
+    for (const [x, y] of this.level.crates) {
       const crate = new Destructible(this, x, y, 'crate');
       this.destructibles.set(crate.body.id, crate);
     }
@@ -121,7 +135,7 @@ export class RaceScene extends Phaser.Scene {
       this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => engine.stop());
     }
 
-    this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height);
+    this.cameras.main.setBounds(0, 0, this.worldWidth(), WORLD_HEIGHT);
     this.cameras.main.startFollow(this.car.chassis, false, 0.08, 0.08);
     this.cameras.main.setFollowOffset(-200, 0); // look ahead of the car
 
@@ -189,7 +203,7 @@ export class RaceScene extends Phaser.Scene {
 
   /** Top-of-ground y at x, interpolated from the level's ground chain. */
   private groundYAt(x: number): number {
-    const pts = LEVEL1.ground;
+    const pts = this.level.ground;
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i];
       const b = pts[i + 1];
@@ -203,7 +217,7 @@ export class RaceScene extends Phaser.Scene {
   }
 
   private buildGround(): void {
-    const pts = LEVEL1.ground;
+    const pts = this.level.ground;
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i];
       const b = pts[i + 1];
@@ -240,16 +254,18 @@ export class RaceScene extends Phaser.Scene {
       .text(
         640,
         330,
-        `🏁 YOU WIN! 🏁\n\ntime ${this.finishTimeS}s\nsmashed ${this.smashed} things\n\npress R to race again`,
+        `🏁 YOU WIN! 🏁\n\ntime ${this.finishTimeS}s\nsmashed ${this.smashed} things\n\n${
+          this.touch ? 'tap for the menu' : 'R = race again · M = menu'
+        }`,
         { fontSize: '34px', color: '#1b1b24', align: 'center' },
       )
       .setOrigin(0.5)
       .setScrollFactor(0);
 
-    // On touch screens: tap anywhere to race again (armed after a beat so
-    // a thumb still on the gas doesn't instantly restart).
+    // On touch screens: tap anywhere for the menu (armed after a beat so
+    // a thumb still on the gas doesn't instantly leave).
     this.time.delayedCall(800, () => {
-      this.input.once('pointerdown', () => this.scene.restart());
+      this.input.once('pointerdown', () => this.scene.start('menu'));
     });
   }
 
@@ -288,11 +304,11 @@ export class RaceScene extends Phaser.Scene {
         `time ${elapsed.toFixed(1)}s   smashed ${this.smashed}`,
       );
 
-      if (this.car.chassis.x >= LEVEL1.finishX) this.finish(time);
+      if (this.car.chassis.x >= this.level.finishX) this.finish(time);
     }
 
     // Fell in a pit or off the world: respawn at the start (clock keeps running).
-    if (this.car.chassis.y > WORLD.height + 200) {
+    if (this.car.chassis.y > WORLD_HEIGHT + 200) {
       this.car.reset(START.x, START.y);
     }
   }

@@ -1,6 +1,7 @@
 # Spec 010: Level 2 + level picker (v3)
 
-**Status:** draft
+**Status:** built (verified 2026-07-04; level 2 is starter scaffolding
+awaiting Milton's real design)
 
 ## What
 
@@ -25,6 +26,9 @@ Level 1 is Dad's course. Level 2 is Milton's. The picker turns "a level" into
 
 ## Acceptance criteria
 
-- [ ] Menu shows both levels; picking one starts that course
-- [ ] Level 2's shape came from Milton (paper sketch in art/inbox counts)
-- [ ] Beating a level returns you to the menu (or offers next level)
+- [x] Menu shows both levels; picking one starts that course (click/tap
+      or keys 1/2; verified headless end to end)
+- [ ] Level 2's shape came from Milton (paper sketch in art/inbox counts —
+      the current "Danger Mountain" is scaffolding for him to replace)
+- [x] Beating a level returns you to the menu (M or tap after winning;
+      R still restarts the same level)

@@ -4,10 +4,11 @@
 //         right; bigger second number = LOWER ground. null makes a gap (pit!).
 // crates: [x, y] spots where a crate drops in. Stack them for towers.
 // finishX: where the finish flag stands.
+import type { LevelDef } from './types';
 
-type GroundPoint = [number, number] | null;
+export const LEVEL1: LevelDef = {
+  name: 'Crate Country',
 
-export const LEVEL1 = {
   ground: [
     [0, 700],
     [300, 700],
@@ -24,7 +25,7 @@ export const LEVEL1 = {
     [2700, 700],
     [3000, 690],
     [3400, 700],
-  ] as GroundPoint[],
+  ],
 
   crates: [
     [700, 600],
@@ -33,7 +34,7 @@ export const LEVEL1 = {
     [2450, 580],
     [2510, 660],
     [2480, 500],
-  ] as [number, number][],
+  ],
 
   finishX: 3150,
 };

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
+import { MenuScene } from './scenes/MenuScene';
 import { RaceScene } from './scenes/RaceScene';
 
 const game = new Phaser.Game({
@@ -18,7 +19,7 @@ const game = new Phaser.Game({
       gravity: { x: 0, y: 1 },
     },
   },
-  scene: [BootScene, RaceScene],
+  scene: [BootScene, MenuScene, RaceScene],
 });
 
 // Handle for the headless verification harness (tools/verify-smash.mjs).
