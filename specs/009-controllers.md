@@ -11,7 +11,7 @@ Play the game with whatever is in your hands:
   screen to race again. Landscape nudge when held in portrait; fullscreen on
   first tap where the browser allows it.
 - **Gamepad:** right trigger / A = gas, left trigger / X = reverse,
-  stick or d-pad = flip in air, Start = restart.
+  B = jump, stick or d-pad = flip in air, Start = restart.
 
 Keyboard keeps working everywhere; whichever input was touched last wins.
 

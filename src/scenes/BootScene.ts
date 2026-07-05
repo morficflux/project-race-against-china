@@ -8,6 +8,10 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'crate', file: 'crate.png' },
   { key: 'flag', file: 'flag.png' },
   { key: 'title', file: 'title.png' },
+  { key: 'pickup', file: 'pickup.png' },
+  { key: 'wall', file: 'wall.png' },
+  { key: 'wall-cracked', file: 'wall-cracked.png' },
+  { key: 'wall-broken', file: 'wall-broken.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -69,6 +73,50 @@ export class BootScene extends Phaser.Scene {
       g.generateTexture('flag', 60, 40);
     }
 
+    if (!this.textures.exists('pickup')) {
+      // Five-point star.
+      g.fillStyle(0xffd94d);
+      g.lineStyle(4, 0xb8860b);
+      const pts: Phaser.Types.Math.Vector2Like[] = [];
+      for (let i = 0; i < 10; i++) {
+        const radius = i % 2 === 0 ? 26 : 11;
+        const a = -Math.PI / 2 + (i * Math.PI) / 5;
+        pts.push({ x: 28 + Math.cos(a) * radius, y: 28 + Math.sin(a) * radius });
+      }
+      g.fillPoints(pts, true);
+      g.strokePoints(pts, true);
+      g.generateTexture('pickup', 56, 56);
+      g.clear();
+    }
+
+    // Brick wall damage stages. Milton's drawings (wall.png, wall-cracked.png,
+    // wall-broken.png) replace these one by one as they land.
+    const drawWall = (key: string, cracks: number, holes: boolean) => {
+      if (this.textures.exists(key)) return;
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 2; col++) {
+          if (holes && ((row === 2 && col === 1) || (row === 5 && col === 0))) continue;
+          g.fillStyle((row + col) % 2 === 0 ? 0xb0563f : 0xa04a35);
+          const off = row % 2 === 0 ? 0 : -20;
+          g.fillRect(Math.max(0, col * 40 + off + 2), row * 20 + 2, 36, 16);
+        }
+      }
+      g.lineStyle(3, 0x3a1f18);
+      for (let i = 0; i < cracks; i++) {
+        const cx = 15 + i * 22;
+        g.beginPath();
+        g.moveTo(cx, 10 + i * 8);
+        g.lineTo(cx + 12, 60 + i * 10);
+        g.lineTo(cx - 4, 110 + i * 12);
+        g.strokePath();
+      }
+      g.generateTexture(key, 80, 160);
+      g.clear();
+    };
+    drawWall('wall', 0, false);
+    drawWall('wall-cracked', 2, false);
+    drawWall('wall-broken', 3, true);
+
     // Dust puff for wheel spin (always generated — it's a soft blob).
     g.fillStyle(0xcbb794, 0.9);
     g.fillCircle(6, 6, 6);
@@ -84,7 +132,7 @@ export class BootScene extends Phaser.Scene {
   // public/audio/. Only files that actually exist get loaded — a 404 fed
   // to the audio decoder throws. Missing sounds = silent fallbacks.
   private async loadMiltonsSounds(): Promise<void> {
-    const names = ['engine', 'crash', 'win'];
+    const names = ['engine', 'crash', 'win', 'pickup'];
     const found: [string, string][] = [];
     await Promise.all(
       names.map(async (name) => {

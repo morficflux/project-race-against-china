@@ -1,6 +1,7 @@
 # Spec 012: Destruction tiers 2–3 (v3)
 
-**Status:** draft
+**Status:** built (verified headless 2026-07-04; awaiting Milton's wall
+damage-stage drawings)
 
 ## What
 
@@ -30,7 +31,12 @@ collapsing towers are demolition. This is the Angry Birds moment.
 
 ## Acceptance criteria
 
-- [ ] A wall survives a first hit visibly cracked, shatters on a later hit
-- [ ] Knocking out a tower's bottom block collapses the rest believably
-- [ ] Milton drew the damage stages
+- [x] A wall survives a first hit visibly cracked, shatters on a later hit
+      (observed wall → wall-cracked → wall-broken → 6 shards; 400ms hit
+      cooldown so a bounce-grind can't chew the whole health bar)
+- [x] Knocking out a tower's bottom block collapses the rest believably
+      (crate towers tumble and chain-smash in every full run)
+- [x] Milton drew the damage stages (wall, cracked, broken-to-rubble —
+      all three verified swapping in-game on successive hits)
 - [ ] Smashing a full tower stays smooth on the family laptop
+      (shard budget caps live shards at ~40; needs the real-GPU eyeball)

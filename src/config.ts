@@ -17,4 +17,7 @@ export const TUNABLES = {
 
   // How much the screen shakes when you smash. 0 = calm, 2 = earthquake.
   shakeAmount: 1.0,
+
+  // How hard the car jumps off the ground. Bigger = moon bounce.
+  jumpPower: 11,
 };

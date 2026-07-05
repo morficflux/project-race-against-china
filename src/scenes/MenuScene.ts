@@ -10,10 +10,12 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     // Milton can draw the game logo: npm run sprite -- <photo> title 700
+    let subtitleY = 245;
     if (this.textures.exists('title')) {
-      const img = this.add.image(640, 170, 'title');
-      const scale = Math.min(700 / img.width, 220 / img.height);
+      const img = this.add.image(640, 160, 'title');
+      const scale = Math.min(700 / img.width, 210 / img.height);
       img.setScale(scale);
+      subtitleY = 160 + (img.height * scale) / 2 + 26;
     } else {
       this.add
         .text(640, 150, 'RACE AGAINST CHINA', {
@@ -24,7 +26,7 @@ export class MenuScene extends Phaser.Scene {
         .setOrigin(0.5);
     }
     this.add
-      .text(640, 245, 'a Milton + Dad production', {
+      .text(640, subtitleY, 'a Milton + Dad production', {
         fontSize: '26px',
         color: '#1b1b24',
       })

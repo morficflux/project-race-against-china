@@ -36,5 +36,17 @@ export const LEVEL1: LevelDef = {
     [2480, 500],
   ],
 
+  // Stars to drive through — the ones over the gap need a good jump!
+  pickups: [
+    [500, 590],
+    [950, 615],
+    [1830, 430],
+    [2150, 660],
+    [2900, 600],
+  ],
+
+  // Brick walls take THREE hits: crack, crack more, SMASH.
+  walls: [[2950, 600]],
+
   finishX: 3150,
 };
