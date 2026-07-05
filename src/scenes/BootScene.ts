@@ -156,6 +156,13 @@ export class BootScene extends Phaser.Scene {
       }
     }
 
+    // Ghost silhouette for best-time replays (always generated — a plain
+    // shape on purpose, so it never depends on whichever car is selected).
+    g.fillStyle(0xffffff);
+    g.fillRoundedRect(0, 0, 120, 50, 10);
+    g.generateTexture('ghost-car', 120, 50);
+    g.clear();
+
     // Dust puff for wheel spin (always generated — it's a soft blob).
     g.fillStyle(0xcbb794, 0.9);
     g.fillCircle(6, 6, 6);
