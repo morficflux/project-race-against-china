@@ -71,17 +71,20 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    const levelsStartY = carRowY + 100;
-    const levelSpacing = 100;
+    // Sized to comfortably fit 3+ levels within the 720px canvas.
+    const levelsStartY = carRowY + 90;
+    const levelSpacing = 74;
+    let lastLevelY = levelsStartY;
     LEVELS.forEach((level, i) => {
       const y = levelsStartY + i * levelSpacing;
+      lastLevelY = y;
       const button = this.add
-        .rectangle(640, y, 620, 88, 0xffffff, 0.95)
+        .rectangle(640, y, 620, 64, 0xffffff, 0.95)
         .setStrokeStyle(5, 0x1b1b24)
         .setInteractive({ useHandCursor: true });
       this.add
         .text(640, y, `${i + 1}.  ${level.name}`, {
-          fontSize: '36px',
+          fontSize: '28px',
           color: '#1b1b24',
         })
         .setOrigin(0.5);
@@ -94,9 +97,10 @@ export class MenuScene extends Phaser.Scene {
       if (KEY_NAMES[i]) this.input.keyboard!.on(`keydown-${KEY_NAMES[i]}`, go);
     });
 
-    const footerY = levelsStartY + LEVELS.length * levelSpacing + 10;
+    const footerY = lastLevelY + 55;
+    const keyHint = LEVELS.map((_, i) => i + 1).join(' / ');
     this.add
-      .text(640, footerY, 'tap a car and a level — or press 1 / 2', {
+      .text(640, footerY, `tap a car and a level — or press ${keyHint}`, {
         fontSize: '22px',
         color: '#1b1b24',
       })

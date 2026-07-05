@@ -16,6 +16,7 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'wall-broken', file: 'wall-broken.png' },
   { key: 'bg-level1', file: 'bg-level1.png' },
   { key: 'bg-level2', file: 'bg-level2.png' },
+  { key: 'bg-level3', file: 'bg-level3.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
