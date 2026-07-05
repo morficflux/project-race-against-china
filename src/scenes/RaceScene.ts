@@ -3,6 +3,7 @@ import { Car } from '../entities/Car';
 import { Destructible } from '../entities/Destructible';
 import { Pickup } from '../entities/Pickup';
 import { TouchControls } from '../ui/TouchControls';
+import { GamepadControls } from '../ui/GamepadControls';
 import { EngineSound } from '../systems/EngineSound';
 import { TUNABLES } from '../config';
 import { LEVELS, type LevelDef } from '../levels';
@@ -29,6 +30,7 @@ export class RaceScene extends Phaser.Scene {
   private finishTimeS: string | null = null;
   private won = false;
   private touch: TouchControls | null = null;
+  private gamepad!: GamepadControls;
   private dust!: Phaser.GameObjects.Particles.ParticleEmitter;
   private background!: Phaser.GameObjects.TileSprite;
   private engine: EngineSound | null = null;
@@ -68,6 +70,7 @@ export class RaceScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-R', () => this.scene.restart());
     this.input.keyboard!.on('keydown-M', () => this.scene.start('menu'));
     this.setUpTouch();
+    this.gamepad = new GamepadControls(this);
 
     this.destructibles.clear();
     for (const [x, y] of this.level.crates) {
@@ -362,14 +365,17 @@ export class RaceScene extends Phaser.Scene {
     });
   }
 
-  /** Combined throttle from keyboard and touch; last one pressed wins. */
+  /** Combined throttle from keyboard, gamepad, or touch — first non-zero wins. */
   private throttle(): number {
     const kb = this.cursors.right.isDown ? 1 : this.cursors.left.isDown ? -1 : 0;
-    return kb !== 0 ? kb : (this.touch?.throttle ?? 0);
+    if (kb !== 0) return kb;
+    const pad = this.gamepad.throttle;
+    return pad !== 0 ? pad : (this.touch?.throttle ?? 0);
   }
 
   update(time: number, delta: number): void {
     this.background.tilePositionX = this.cameras.main.scrollX * BG_SCROLL_FACTOR;
+    if (this.gamepad.consumeRestartPress()) this.scene.restart();
 
     const spin = this.won ? 0 : Math.abs(this.car.wheelSpin);
     if (this.engineLoop?.isPlaying) {
@@ -381,7 +387,10 @@ export class RaceScene extends Phaser.Scene {
     if (!this.won) {
       const throttle = this.throttle();
       const jump =
-        this.cursors.up.isDown || this.spaceKey.isDown || (this.touch?.jump ?? false);
+        this.cursors.up.isDown ||
+        this.spaceKey.isDown ||
+        (this.touch?.jump ?? false) ||
+        this.gamepad.jump;
       this.car.update(throttle, jump, delta);
 
       // Kick up dust while the tires are working the ground.
