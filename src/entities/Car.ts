@@ -92,6 +92,19 @@ export class Car {
     }
   }
 
+  /** Star grabbed! A quick kick in whichever way the car is already going —
+   * defaults forward (toward the finish) rather than risk an unexpected
+   * shove backward when nearly stopped (wheel-spin residue is too noisy
+   * near zero to trust as a "facing direction"). */
+  boost(): void {
+    const vx = (this.chassis.body as MatterJS.BodyType).velocity.x;
+    const direction = vx < -0.5 ? -1 : 1;
+    for (const part of [this.chassis, ...this.wheels]) {
+      const body = part.body as MatterJS.BodyType;
+      part.setVelocity(body.velocity.x + direction * TUNABLES.boostPower, body.velocity.y);
+    }
+  }
+
   /** throttle: -1 (reverse), 0, 1 (gas) — from keyboard, touch, or gamepad. */
   update(throttle: number, jump: boolean, delta: number): void {
     const onGround = this.isOnGround;

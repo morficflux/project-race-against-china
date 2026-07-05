@@ -123,7 +123,15 @@ export class RaceScene extends Phaser.Scene {
     );
     // (off first: the scene emitter survives restarts, the listeners shouldn't stack)
     this.events.off('picked-up');
-    this.events.on('picked-up', () => this.stars++);
+    this.events.on('picked-up', () => {
+      this.stars++;
+      this.car.boost();
+      const at = this.car.rearWheelContact;
+      this.dust.emitParticleAt(at.x, at.y, 8);
+      if (this.cache.audio.exists('boost')) {
+        this.sound.play('boost', { detune: Phaser.Math.Between(-80, 80) });
+      }
+    });
     this.events.off('cracked');
     this.events.on('cracked', () => {
       // A wall took damage but held: smaller thud than a full smash.

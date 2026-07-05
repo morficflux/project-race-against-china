@@ -132,7 +132,7 @@ export class BootScene extends Phaser.Scene {
   // public/audio/. Only files that actually exist get loaded — a 404 fed
   // to the audio decoder throws. Missing sounds = silent fallbacks.
   private async loadMiltonsSounds(): Promise<void> {
-    const names = ['engine', 'crash', 'win', 'pickup'];
+    const names = ['engine', 'crash', 'win', 'pickup', 'boost'];
     const found: [string, string][] = [];
     await Promise.all(
       names.map(async (name) => {
