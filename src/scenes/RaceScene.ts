@@ -10,6 +10,9 @@ import { LEVELS, type LevelDef } from '../levels';
 const START = { x: 200, y: 520 };
 const WORLD_HEIGHT = 1000;
 const GROUND_THICKNESS = 40;
+// How much slower the background drifts than the foreground — the classic
+// parallax "distant things move less" feel. 0 = fixed, 1 = same as ground.
+const BG_SCROLL_FACTOR = 0.3;
 
 export class RaceScene extends Phaser.Scene {
   private car!: Car;
@@ -27,6 +30,7 @@ export class RaceScene extends Phaser.Scene {
   private won = false;
   private touch: TouchControls | null = null;
   private dust!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private background!: Phaser.GameObjects.TileSprite;
   private engine: EngineSound | null = null;
   private engineLoop: Phaser.Sound.WebAudioSound | null = null;
 
@@ -53,6 +57,7 @@ export class RaceScene extends Phaser.Scene {
     this.finishTimeS = null;
     this.smashed = 0;
 
+    this.buildBackground();
     this.buildGround();
     this.plantFlag(START.x - 120, 'START');
     this.plantFlag(this.level.finishX, 'FINISH');
@@ -291,6 +296,19 @@ export class RaceScene extends Phaser.Scene {
     return 700;
   }
 
+  private buildBackground(): void {
+    const key =
+      this.level.background && this.textures.exists(this.level.background)
+        ? this.level.background
+        : 'sky-fallback';
+    const { width, height } = this.scale.gameSize;
+    this.background = this.add
+      .tileSprite(0, 0, width, height, key)
+      .setOrigin(0, 0)
+      .setScrollFactor(0, 0)
+      .setDepth(-100);
+  }
+
   private buildGround(): void {
     const pts = this.level.ground;
     for (let i = 0; i < pts.length - 1; i++) {
@@ -351,6 +369,8 @@ export class RaceScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    this.background.tilePositionX = this.cameras.main.scrollX * BG_SCROLL_FACTOR;
+
     const spin = this.won ? 0 : Math.abs(this.car.wheelSpin);
     if (this.engineLoop?.isPlaying) {
       this.engineLoop.setRate(0.6 + spin * 0.6);

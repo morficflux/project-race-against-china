@@ -10,5 +10,8 @@ export interface LevelDef {
   pickups?: [number, number][];
   /** Brick walls that take 3 hits (Milton draws the damage stages). */
   walls?: [number, number][];
+  /** Sprite key for this level's parallax background (Milton draws one per
+   * level). Falls back to the flat sky color if not set/not drawn yet. */
+  background?: string;
   finishX: number;
 }

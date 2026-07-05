@@ -14,12 +14,20 @@
 import sharp from 'sharp';
 import path from 'node:path';
 
-const args = process.argv.slice(2).filter((a) => !a.startsWith('--scrub'));
+const args = process.argv
+  .slice(2)
+  .filter((a) => !a.startsWith('--scrub') && a !== '--opaque');
 const scrubHard = process.argv.includes('--scrub-hard');
 const scrub = scrubHard || process.argv.includes('--scrub');
+// --opaque: for full-bleed art (backgrounds) that must stay fully solid —
+// no transparency at all. Skips paper-keying entirely, since a light sky
+// or pale hills would otherwise look just like paper and get erased.
+const opaque = process.argv.includes('--opaque');
 const [input, name, widthArg] = args;
 if (!input || !name) {
-  console.error('usage: npm run sprite -- <input image> <sprite-name> [width] [--scrub | --scrub-hard]');
+  console.error(
+    'usage: npm run sprite -- <input image> <sprite-name> [width] [--scrub | --scrub-hard | --opaque]',
+  );
   process.exit(1);
 }
 const targetWidth = Number(widthArg ?? 256);
@@ -43,46 +51,56 @@ const { data, info } = await sharp(input)
   .toBuffer({ resolveWithObject: true });
 const { width, height } = info;
 
-// Paper shade per corner — photos have lighting gradients, so the paper's
-// color drifts across the frame. We key each pixel against a bilinear
-// blend of the four corner samples instead of one global shade.
-const patch = Math.round(Math.min(width, height) * 0.06);
-const median = (a) => a.sort((x, y) => x - y)[a.length >> 1];
-const cornerShade = (cx, cy) => {
-  const rs = [], gs = [], bs = [];
-  for (let y = cy; y < cy + patch; y++) {
-    for (let x = cx; x < cx + patch; x += 3) {
-      const i = (y * width + x) * 3;
-      rs.push(data[i]); gs.push(data[i + 1]); bs.push(data[i + 2]);
-    }
-  }
-  return [median(rs), median(gs), median(bs)];
-};
-const tl = cornerShade(0, 0);
-const tr = cornerShade(width - patch, 0);
-const bl = cornerShade(0, height - patch);
-const br = cornerShade(width - patch, height - patch);
-console.log(`paper shades: tl(${tl}) tr(${tr}) bl(${bl}) br(${br})`);
-
-// Key out the paper, into an RGBA buffer.
+// Build the RGBA buffer. --opaque skips all paper-detection entirely — the
+// whole photo IS the art (a background must stay fully solid; a pale sky
+// would otherwise look exactly like paper and get erased).
 const rgba = Buffer.alloc(width * height * 4);
-for (let y = 0; y < height; y++) {
-  const v = y / height;
-  for (let x = 0; x < width; x++) {
-    const u = x / width;
-    const i = (y * width + x) * 3;
-    const o = (y * width + x) * 4;
-    const px = [data[i], data[i + 1], data[i + 2]];
-    const deltas = px.map((val, ch) => {
-      const paper =
-        (tl[ch] * (1 - u) + tr[ch] * u) * (1 - v) +
-        (bl[ch] * (1 - u) + br[ch] * u) * v;
-      return val - paper;
-    });
-    const isBright = deltas.every((d) => d > -PAPER_MARGIN);
-    const isPaperTint = Math.max(...deltas) - Math.min(...deltas) < TINT_SPREAD;
-    rgba[o] = px[0]; rgba[o + 1] = px[1]; rgba[o + 2] = px[2];
-    rgba[o + 3] = isBright && isPaperTint ? 0 : 255;
+if (opaque) {
+  for (let p = 0, i = 0, o = 0; p < width * height; p++, i += 3, o += 4) {
+    rgba[o] = data[i]; rgba[o + 1] = data[i + 1]; rgba[o + 2] = data[i + 2];
+    rgba[o + 3] = 255;
+  }
+} else {
+  // Paper shade per corner — photos have lighting gradients, so the paper's
+  // color drifts across the frame. We key each pixel against a bilinear
+  // blend of the four corner samples instead of one global shade.
+  const patch = Math.round(Math.min(width, height) * 0.06);
+  const median = (a) => a.sort((x, y) => x - y)[a.length >> 1];
+  const cornerShade = (cx, cy) => {
+    const rs = [], gs = [], bs = [];
+    for (let y = cy; y < cy + patch; y++) {
+      for (let x = cx; x < cx + patch; x += 3) {
+        const i = (y * width + x) * 3;
+        rs.push(data[i]); gs.push(data[i + 1]); bs.push(data[i + 2]);
+      }
+    }
+    return [median(rs), median(gs), median(bs)];
+  };
+  const tl = cornerShade(0, 0);
+  const tr = cornerShade(width - patch, 0);
+  const bl = cornerShade(0, height - patch);
+  const br = cornerShade(width - patch, height - patch);
+  console.log(`paper shades: tl(${tl}) tr(${tr}) bl(${bl}) br(${br})`);
+
+  // Key out the paper.
+  for (let y = 0; y < height; y++) {
+    const v = y / height;
+    for (let x = 0; x < width; x++) {
+      const u = x / width;
+      const i = (y * width + x) * 3;
+      const o = (y * width + x) * 4;
+      const px = [data[i], data[i + 1], data[i + 2]];
+      const deltas = px.map((val, ch) => {
+        const paper =
+          (tl[ch] * (1 - u) + tr[ch] * u) * (1 - v) +
+          (bl[ch] * (1 - u) + br[ch] * u) * v;
+        return val - paper;
+      });
+      const isBright = deltas.every((d) => d > -PAPER_MARGIN);
+      const isPaperTint = Math.max(...deltas) - Math.min(...deltas) < TINT_SPREAD;
+      rgba[o] = px[0]; rgba[o + 1] = px[1]; rgba[o + 2] = px[2];
+      rgba[o + 3] = isBright && isPaperTint ? 0 : 255;
+    }
   }
 }
 
@@ -91,7 +109,7 @@ for (let y = 0; y < height; y++) {
 // bright pixel connected to the outside. The drawing's marker outline is
 // the dam — nothing inside it gets touched. Skip for drawings with pale,
 // open edges (the outline must enclose the art).
-if (scrub) {
+if (scrub && !opaque) {
   const LUM_FLOOR = 165;
   // Plain --scrub only erases bright WARM/NEUTRAL pixels — paper photographs
   // gray-to-beige, while pale cool crayon (windshield blue) reads blue>red
@@ -126,8 +144,9 @@ if (scrub) {
 
 // Despeckle: photo grain survives the keying as isolated opaque dots.
 // Drop any opaque pixel whose 9x9 neighbourhood is mostly transparent
-// (solid drawing regions and their edges easily clear the bar).
-{
+// (solid drawing regions and their edges easily clear the bar). Pointless
+// (and a no-op anyway) in --opaque mode, where every pixel is solid.
+if (!opaque) {
   const alpha = new Uint8Array(width * height);
   for (let p = 0; p < width * height; p++) alpha[p] = rgba[p * 4 + 3] ? 1 : 0;
   // integral image for O(1) window sums

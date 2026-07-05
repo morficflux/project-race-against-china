@@ -7,6 +7,10 @@ import type { LevelDef } from './types';
 export const LEVEL2: LevelDef = {
   name: 'Danger Mountain',
 
+  // Milton's background for this level (npm run sprite -- <photo>
+  // bg-level2 1280 --opaque). Falls back to flat sky blue until drawn.
+  background: 'bg-level2',
+
   ground: [
     [0, 700],
     [400, 700],

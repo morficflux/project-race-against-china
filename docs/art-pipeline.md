@@ -33,6 +33,16 @@ Pick one:
   No real drawing handy? `node tools/make-test-drawing.mjs art/inbox/test.jpg`
   fakes one so you can rehearse the pipeline.
 
+  **Flags** (add after the width):
+  - `--scrub` / `--scrub-hard` — for photos where the paper fights the
+    normal color-keying (strong tint, uneven lighting): flood-fills bright
+    paper in from the photo's edges instead, using Milton's marker outline
+    as the dam.
+  - `--opaque` — for **backgrounds only**. Skips paper-removal entirely so
+    the art stays fully solid edge-to-edge (a light-blue sky would
+    otherwise look just like paper and get erased). Use this for anything
+    in the "Background strip" row below.
+
 ## 4. Size guide
 
 Keep everything in proportion to the car (256px wide):

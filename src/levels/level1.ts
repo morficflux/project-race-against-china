@@ -9,6 +9,10 @@ import type { LevelDef } from './types';
 export const LEVEL1: LevelDef = {
   name: 'Crate Country',
 
+  // Milton's background for this level (npm run sprite -- <photo>
+  // bg-level1 1280 --opaque). Falls back to flat sky blue until drawn.
+  background: 'bg-level1',
+
   ground: [
     [0, 700],
     [300, 700],

@@ -12,6 +12,8 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'wall', file: 'wall.png' },
   { key: 'wall-cracked', file: 'wall-cracked.png' },
   { key: 'wall-broken', file: 'wall-broken.png' },
+  { key: 'bg-level1', file: 'bg-level1.png' },
+  { key: 'bg-level2', file: 'bg-level2.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -116,6 +118,18 @@ export class BootScene extends Phaser.Scene {
     drawWall('wall', 0, false);
     drawWall('wall-cracked', 2, false);
     drawWall('wall-broken', 3, true);
+
+    // Any level background Milton hasn't drawn yet: flat sky blue, same
+    // color as the old code-only background, so nothing looks broken.
+    // 'sky-fallback' additionally covers any level with no background key.
+    for (const key of [...SPRITES.map((s) => s.key), 'sky-fallback']) {
+      if ((key.startsWith('bg-') || key === 'sky-fallback') && !this.textures.exists(key)) {
+        g.fillStyle(0x87ceeb);
+        g.fillRect(0, 0, 64, 64);
+        g.generateTexture(key, 64, 64);
+        g.clear();
+      }
+    }
 
     // Dust puff for wheel spin (always generated — it's a soft blob).
     g.fillStyle(0xcbb794, 0.9);
