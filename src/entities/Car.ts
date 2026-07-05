@@ -14,11 +14,17 @@ export class Car {
   private upsideDownMs = 0;
   private lastJumpMs = 0;
 
-  constructor(private scene: Phaser.Scene, x: number, y: number) {
+  constructor(
+    private scene: Phaser.Scene,
+    x: number,
+    y: number,
+    chassisKey = 'chassis',
+    wheelKey = 'wheel',
+  ) {
     // Negative group: chassis and wheels never collide with each other.
     const group = scene.matter.world.nextGroup(true);
 
-    this.chassis = scene.matter.add.sprite(x, y, 'chassis');
+    this.chassis = scene.matter.add.sprite(x, y, chassisKey);
     this.chassis.setBody({ type: 'rectangle', width: 120, height: 50 });
     (this.chassis.body as MatterJS.BodyType).label = 'car';
     this.chassis.setCollisionGroup(group);
@@ -29,7 +35,7 @@ export class Car {
     this.chassis.setDisplaySize(140, (140 * art.height) / art.width);
 
     this.wheels = [-WHEEL_OFFSET_X, WHEEL_OFFSET_X].map((offsetX) => {
-      const wheel = scene.matter.add.sprite(x + offsetX, y + WHEEL_OFFSET_Y, 'wheel');
+      const wheel = scene.matter.add.sprite(x + offsetX, y + WHEEL_OFFSET_Y, wheelKey);
       wheel.setCircle(WHEEL_RADIUS);
       (wheel.body as MatterJS.BodyType).label = 'car';
       wheel.setCollisionGroup(group);

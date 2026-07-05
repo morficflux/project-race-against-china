@@ -5,6 +5,8 @@ import Phaser from 'phaser';
 const SPRITES: { key: string; file: string }[] = [
   { key: 'chassis', file: 'car.png' },
   { key: 'wheel', file: 'wheel.png' },
+  { key: 'chassis2', file: 'car2.png' },
+  { key: 'wheel2', file: 'wheel2.png' },
   { key: 'crate', file: 'crate.png' },
   { key: 'flag', file: 'flag.png' },
   { key: 'title', file: 'title.png' },
@@ -50,6 +52,29 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x777777);
       g.fillCircle(22, 22, 6);
       g.generateTexture('wheel', 44, 44);
+    }
+
+    if (!this.textures.exists('chassis2')) {
+      // Second car placeholder — blue, so it's obviously not car 1 (or
+      // Milton's real drawing) until he draws one.
+      g.fillStyle(0x2f6fd9);
+      g.fillRoundedRect(0, 0, 120, 50, 10);
+      g.generateTexture('chassis2', 120, 50);
+      g.clear();
+    }
+
+    if (!this.textures.exists('wheel2')) {
+      g.fillStyle(0x2b2b2b);
+      g.fillCircle(22, 22, 22);
+      g.lineStyle(5, 0x9ec2f5);
+      g.beginPath();
+      g.moveTo(22, 22);
+      g.lineTo(22, 4);
+      g.strokePath();
+      g.fillStyle(0x777777);
+      g.fillCircle(22, 22, 6);
+      g.generateTexture('wheel2', 44, 44);
+      g.clear();
     }
 
     if (!this.textures.exists('crate')) {

@@ -7,6 +7,7 @@ import { GamepadControls } from '../ui/GamepadControls';
 import { EngineSound } from '../systems/EngineSound';
 import { TUNABLES } from '../config';
 import { LEVELS, type LevelDef } from '../levels';
+import { CARS } from '../cars';
 
 const START = { x: 200, y: 520 };
 const WORLD_HEIGHT = 1000;
@@ -37,13 +38,15 @@ export class RaceScene extends Phaser.Scene {
   private engineLoop: Phaser.Sound.WebAudioSound | null = null;
 
   private level: LevelDef = LEVELS[0];
+  private carChoice = CARS[0];
 
   constructor() {
     super('race');
   }
 
-  init(data: { levelIndex?: number }): void {
+  init(data: { levelIndex?: number; carIndex?: number }): void {
     this.level = LEVELS[data.levelIndex ?? 0] ?? LEVELS[0];
+    this.carChoice = CARS[data.carIndex ?? 0] ?? CARS[0];
   }
 
   /** Rightmost ground point = how wide this level's world is. */
@@ -64,7 +67,13 @@ export class RaceScene extends Phaser.Scene {
     this.plantFlag(START.x - 120, 'START');
     this.plantFlag(this.level.finishX, 'FINISH');
 
-    this.car = new Car(this, START.x, START.y);
+    this.car = new Car(
+      this,
+      START.x,
+      START.y,
+      this.carChoice.chassisKey,
+      this.carChoice.wheelKey,
+    );
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.spaceKey = this.input.keyboard!.addKey('SPACE');
     this.input.keyboard!.on('keydown-R', () => this.scene.restart());
