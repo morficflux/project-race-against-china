@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Car } from '../entities/Car';
 import { Destructible } from '../entities/Destructible';
+import { Pickup } from '../entities/Pickup';
 import { TouchControls } from '../ui/TouchControls';
 import { EngineSound } from '../systems/EngineSound';
 import { TUNABLES } from '../config';
@@ -13,8 +14,13 @@ const GROUND_THICKNESS = 40;
 export class RaceScene extends Phaser.Scene {
   private car!: Car;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private spaceKey!: Phaser.Input.Keyboard.Key;
   private destructibles = new Map<number, Destructible>();
+  private pickups = new Map<number, Pickup>();
   private smashed = 0;
+  private stars = 0;
+  private starsTotal = 0;
+  private sparkle!: Phaser.GameObjects.Particles.ParticleEmitter;
   private hud!: Phaser.GameObjects.Text;
   private raceStartMs: number | null = null;
   private finishTimeS: string | null = null;
@@ -53,6 +59,7 @@ export class RaceScene extends Phaser.Scene {
 
     this.car = new Car(this, START.x, START.y);
     this.cursors = this.input.keyboard!.createCursorKeys();
+    this.spaceKey = this.input.keyboard!.addKey('SPACE');
     this.input.keyboard!.on('keydown-R', () => this.scene.restart());
     this.input.keyboard!.on('keydown-M', () => this.scene.start('menu'));
     this.setUpTouch();
@@ -62,12 +69,48 @@ export class RaceScene extends Phaser.Scene {
       const crate = new Destructible(this, x, y, 'crate');
       this.destructibles.set(crate.body.id, crate);
     }
+    // Walls take three hits, cracking visibly between them.
+    for (const [x, y] of this.level.walls ?? []) {
+      const wall = new Destructible(this, x, y, 'wall', {
+        width: 80,
+        height: 160,
+        health: 3,
+        stages: ['wall', 'wall-cracked', 'wall-broken'],
+      });
+      this.destructibles.set(wall.body.id, wall);
+    }
+
+    // Sparkle burst for collecting (little spinning stars).
+    this.sparkle = this.add.particles(0, 0, 'pickup', {
+      speed: { min: 80, max: 180 },
+      lifespan: { min: 300, max: 550 },
+      scale: { start: 0.35, end: 0 },
+      rotate: { min: 0, max: 360 },
+      frequency: -1,
+    });
+
+    this.pickups.clear();
+    this.stars = 0;
+    this.starsTotal = (this.level.pickups ?? []).length;
+    for (const [x, y] of this.level.pickups ?? []) {
+      const p = new Pickup(this, x, y);
+      this.pickups.set(p.body.id, p);
+    }
 
     // Anything slamming into a destructible hard enough shatters it.
     this.matter.world.on(
       'collisionstart',
       (event: Phaser.Physics.Matter.Events.CollisionStartEvent) => {
         for (const pair of event.pairs) {
+          // Driving through a star collects it (car bodies only).
+          const pickup =
+            this.pickups.get(pair.bodyA.id) ?? this.pickups.get(pair.bodyB.id);
+          if (pickup) {
+            const other = this.pickups.has(pair.bodyA.id) ? pair.bodyB : pair.bodyA;
+            if (other.label === 'car') pickup.collect(this.sparkle);
+            continue;
+          }
+
           const hit =
             this.destructibles.get(pair.bodyA.id) ??
             this.destructibles.get(pair.bodyB.id);
@@ -78,7 +121,17 @@ export class RaceScene extends Phaser.Scene {
         }
       },
     );
-    // (off first: the scene emitter survives restarts, the listener shouldn't stack)
+    // (off first: the scene emitter survives restarts, the listeners shouldn't stack)
+    this.events.off('picked-up');
+    this.events.on('picked-up', () => this.stars++);
+    this.events.off('cracked');
+    this.events.on('cracked', () => {
+      // A wall took damage but held: smaller thud than a full smash.
+      this.cameras.main.shake(90, 0.0025 * TUNABLES.shakeAmount);
+      if (this.cache.audio.exists('crash')) {
+        this.sound.play('crash', { detune: -500, volume: 0.45 });
+      }
+    });
     this.events.off('smashed');
     this.events.on('smashed', (impact: number) => {
       this.smashed++;
@@ -144,8 +197,8 @@ export class RaceScene extends Phaser.Scene {
         640,
         60,
         this.touch
-          ? 'hold ▶ to drive · in the air: ◀ ▶ to flip'
-          : '← → to drive · in the air: ← → to flip · R restarts',
+          ? 'hold ▶ to drive · ⬆ to jump · in the air: ◀ ▶ to flip'
+          : '← → drive · ↑ jump · in the air: ← → flip · R restarts',
         { fontSize: '24px', color: '#1b1b24' },
       )
       .setOrigin(0.5)
@@ -194,10 +247,24 @@ export class RaceScene extends Phaser.Scene {
 
   private plantFlag(x: number, label: string): void {
     const groundY = this.groundYAt(x);
-    this.add.rectangle(x, groundY - 60, 6, 120, 0x333333); // pole
-    this.add.image(x + 33, groundY - 100, 'flag').setDisplaySize(60, 40);
+    const art = this.textures.get('flag').getSourceImage();
+    let flagTop: number;
+    if (art.height > art.width) {
+      // Milton drew the whole flag, pole included — plant it as-is.
+      const h = 150;
+      this.add.image(x, groundY - h / 2, 'flag').setDisplaySize((h * art.width) / art.height, h);
+      flagTop = groundY - h;
+    } else {
+      this.add.rectangle(x, groundY - 60, 6, 120, 0x333333); // pole
+      this.add.image(x + 33, groundY - 100, 'flag').setDisplaySize(60, 40);
+      flagTop = groundY - 120;
+    }
     this.add
-      .text(x, groundY - 140, label, { fontSize: '20px', color: '#1b1b24' })
+      .text(x, flagTop - 22, label, {
+        fontSize: '22px',
+        color: '#1b1b24',
+        fontStyle: 'bold',
+      })
       .setOrigin(0.5);
   }
 
@@ -254,7 +321,7 @@ export class RaceScene extends Phaser.Scene {
       .text(
         640,
         330,
-        `🏁 YOU WIN! 🏁\n\ntime ${this.finishTimeS}s\nsmashed ${this.smashed} things\n\n${
+        `🏁 YOU WIN! 🏁\n\ntime ${this.finishTimeS}s\nsmashed ${this.smashed} things · ⭐ ${this.stars}/${this.starsTotal}\n\n${
           this.touch ? 'tap for the menu' : 'R = race again · M = menu'
         }`,
         { fontSize: '34px', color: '#1b1b24', align: 'center' },
@@ -285,7 +352,9 @@ export class RaceScene extends Phaser.Scene {
 
     if (!this.won) {
       const throttle = this.throttle();
-      this.car.update(throttle, delta);
+      const jump =
+        this.cursors.up.isDown || this.spaceKey.isDown || (this.touch?.jump ?? false);
+      this.car.update(throttle, jump, delta);
 
       // Kick up dust while the tires are working the ground.
       if (this.car.isOnGround && Math.abs(this.car.wheelSpin) > 0.15) {
@@ -301,7 +370,7 @@ export class RaceScene extends Phaser.Scene {
       const elapsed =
         this.raceStartMs === null ? 0 : (time - this.raceStartMs) / 1000;
       this.hud.setText(
-        `time ${elapsed.toFixed(1)}s   smashed ${this.smashed}`,
+        `time ${elapsed.toFixed(1)}s   smashed ${this.smashed}   ⭐ ${this.stars}/${this.starsTotal}`,
       );
 
       if (this.car.chassis.x >= this.level.finishX) this.finish(time);

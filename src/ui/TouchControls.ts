@@ -16,19 +16,17 @@ export class TouchControls {
 
     const h = scene.scale.gameSize.height;
     const w = scene.scale.gameSize.width;
-    for (const [x, arrow] of [
-      [MARGIN + BTN_RADIUS, '◀'],
-      [w - MARGIN - BTN_RADIUS, '▶'],
-    ] as [number, string][]) {
+    for (const [x, y, arrow] of [
+      [MARGIN + BTN_RADIUS, h - MARGIN - BTN_RADIUS, '◀'],
+      [MARGIN + BTN_RADIUS, h - MARGIN - BTN_RADIUS * 3 - 26, '⬆'],
+      [w - MARGIN - BTN_RADIUS, h - MARGIN - BTN_RADIUS, '▶'],
+    ] as [number, number, string][]) {
       scene.add
-        .circle(x, h - MARGIN - BTN_RADIUS, BTN_RADIUS, 0x1b1b24, 0.25)
+        .circle(x, y, BTN_RADIUS, 0x1b1b24, 0.25)
         .setScrollFactor(0)
         .setDepth(50);
       scene.add
-        .text(x, h - MARGIN - BTN_RADIUS, arrow, {
-          fontSize: '64px',
-          color: '#ffffff',
-        })
+        .text(x, y, arrow, { fontSize: '64px', color: '#ffffff' })
         .setOrigin(0.5)
         .setAlpha(0.8)
         .setScrollFactor(0)
@@ -46,5 +44,15 @@ export class TouchControls {
       else if (pointer.x > width - ZONE_WIDTH) value = 1;
     }
     return value;
+  }
+
+  /** True while a thumb is on the ⬆ button's band (above the ◀ zone). */
+  get jump(): boolean {
+    const { height } = this.scene.scale.gameSize;
+    for (const pointer of this.scene.input.manager.pointers) {
+      if (!pointer.isDown || pointer.x >= ZONE_WIDTH) continue;
+      if (pointer.y < height - ZONE_HEIGHT && pointer.y > height - ZONE_HEIGHT * 2) return true;
+    }
+    return false;
   }
 }

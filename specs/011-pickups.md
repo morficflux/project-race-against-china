@@ -1,6 +1,7 @@
 # Spec 011: Pickups (v3)
 
-**Status:** draft
+**Status:** built (verified headless 2026-07-04; awaiting Milton's pickup
+drawing + booth sound)
 
 ## What
 
@@ -24,6 +25,11 @@ now every run has two scores to beat.
 
 ## Acceptance criteria
 
-- [ ] Driving through a pickup collects it exactly once, with pop + sound
-- [ ] HUD and win screen show collected / total for the level
-- [ ] The pickup art is Milton's
+- [x] Driving through a pickup collects it exactly once, with pop + sparkle
+      (sound plays when Milton records "pickup" in the booth — new ⭐ chip)
+- [x] HUD and win screen show collected / total for the level
+- [x] The pickup art is Milton's (navy-and-gold star, 2026-07-05)
+- [x] Added during playtest: a JUMP (↑ / Space / ⬆ touch button, grounded
+      only, holding = bounce on landing) so floating stars are reachable —
+      new Milton dial `jumpPower`. Verified: 95px lift, hop-collects a
+      floating star.

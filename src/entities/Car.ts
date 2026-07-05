@@ -12,13 +12,15 @@ export class Car {
   private wheels: Phaser.Physics.Matter.Sprite[];
   private groundedFrames = 0;
   private upsideDownMs = 0;
+  private lastJumpMs = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  constructor(private scene: Phaser.Scene, x: number, y: number) {
     // Negative group: chassis and wheels never collide with each other.
     const group = scene.matter.world.nextGroup(true);
 
     this.chassis = scene.matter.add.sprite(x, y, 'chassis');
     this.chassis.setBody({ type: 'rectangle', width: 120, height: 50 });
+    (this.chassis.body as MatterJS.BodyType).label = 'car';
     this.chassis.setCollisionGroup(group);
     this.chassis.setFriction(0.3);
     this.chassis.setMass(8);
@@ -29,6 +31,7 @@ export class Car {
     this.wheels = [-WHEEL_OFFSET_X, WHEEL_OFFSET_X].map((offsetX) => {
       const wheel = scene.matter.add.sprite(x + offsetX, y + WHEEL_OFFSET_Y, 'wheel');
       wheel.setCircle(WHEEL_RADIUS);
+      (wheel.body as MatterJS.BodyType).label = 'car';
       wheel.setCollisionGroup(group);
       wheel.setDisplaySize(WHEEL_RADIUS * 2, WHEEL_RADIUS * 2);
       wheel.setFriction(TUNABLES.wheelGrip);
@@ -78,10 +81,22 @@ export class Car {
     return { x: rear.x, y: rear.y + WHEEL_RADIUS * 0.8 };
   }
 
+  /** Boing — grounded only, so no double jumps (holding = bounce on landing). */
+  private tryJump(): void {
+    const now = this.scene.time.now;
+    if (!this.isOnGround || now - this.lastJumpMs < 300) return;
+    this.lastJumpMs = now;
+    for (const part of [this.chassis, ...this.wheels]) {
+      const body = part.body as MatterJS.BodyType;
+      part.setVelocity(body.velocity.x, body.velocity.y - TUNABLES.jumpPower);
+    }
+  }
+
   /** throttle: -1 (reverse), 0, 1 (gas) — from keyboard, touch, or gamepad. */
-  update(throttle: number, delta: number): void {
+  update(throttle: number, jump: boolean, delta: number): void {
     const onGround = this.isOnGround;
     if (this.groundedFrames > 0) this.groundedFrames--;
+    if (jump) this.tryJump();
 
     if (throttle !== 0) {
       // Drive by spinning the wheels — traction comes from tire friction.
