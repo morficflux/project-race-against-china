@@ -1,7 +1,6 @@
 # Spec 016: Second car — "Milton's garage" (v4)
 
-**Status:** built (verified headless 2026-07-05; awaiting Milton's second
-car drawing)
+**Status:** verified 2026-07-05 — Milton's "CAT" is in the garage
 
 ## What
 
@@ -40,5 +39,7 @@ is a natural bit of ownership for a kid co-designing his own racing game.
       `chassis2`-textured car in the race, and it drives normally)
 - [x] Default car (no explicit pick) still works exactly as before
       (verified: no click, start a level → car is `chassis`, unchanged)
-- [ ] Milton has drawn a second car (blue placeholder stands in for now,
-      same fallback pattern as every other Milton sprite)
+- [x] Milton has drawn a second car — "CAT," a wedge-shaped speedster with
+      its own driver and exhaust pipe. Verified in-game: loads as a real
+      256x141 drawing (not the placeholder), selectable from the garage,
+      and drives normally (confirmed on the ground, smashing a crate).
