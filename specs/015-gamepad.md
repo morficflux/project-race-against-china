@@ -1,7 +1,6 @@
 # Spec 015: Gamepad support (v4)
 
-**Status:** built (verified headless 2026-07-05; awaiting Milton's
-real-controller playtest)
+**Status:** verified 2026-07-05 — Milton played it with a real controller
 
 ## What
 
@@ -81,4 +80,4 @@ and "does it feel good" isn't something a mock can answer.
       (gas, reverse, jump, stick+deadzone, and Start-restart all verified)
 - [x] No pad connected: keyboard/touch behave exactly as before (gamepad
       code is a clean no-op when `total === 0`)
-- [ ] Milton has played it with a real controller and it felt good
+- [x] Milton has played it with a real controller and it felt good
