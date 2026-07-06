@@ -106,5 +106,13 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setAlpha(0.7);
+
+    this.add
+      .text(1260, 20, '🔊 best played with sound on', {
+        fontSize: '18px',
+        color: '#1b1b24',
+      })
+      .setOrigin(1, 0)
+      .setAlpha(0.65);
   }
 }
