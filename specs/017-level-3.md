@@ -1,6 +1,7 @@
 # Spec 017: Level 3 (v4)
 
-**Status:** built (verified headless 2026-07-05; awaiting Milton's design)
+**Status:** signed off 2026-07-11 for v4 — terrain redesign explicitly
+deferred to a later pass ("we will adjust the track later")
 
 ## What
 

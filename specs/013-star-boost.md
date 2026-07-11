@@ -1,7 +1,6 @@
 # Spec 013: Star speed boost (v4)
 
-**Status:** built (verified headless 2026-07-05; awaiting Milton's tuning
-and optional boost sound)
+**Status:** verified 2026-07-11 — Milton signed off
 
 ## What
 
@@ -46,5 +45,5 @@ out of a corner) beyond the win-screen count.
       finish) instead. A genuinely reversing car still boosts further
       backward (matches its real direction of travel) — verified all three
       cases (moving forward, moving backward, stopped).
-- [ ] Milton has tuned `boostPower` to his liking
-- [ ] Milton has recorded a boost sound (optional — silent fallback is fine)
+- [x] Milton has tuned `boostPower` to his liking
+- [x] Milton has recorded a boost sound (optional — skipped, silent fallback)
