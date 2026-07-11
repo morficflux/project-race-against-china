@@ -5,6 +5,8 @@ import Phaser from 'phaser';
 const SPRITES: { key: string; file: string }[] = [
   { key: 'chassis', file: 'car.png' },
   { key: 'wheel', file: 'wheel.png' },
+  { key: 'chassis2', file: 'car2.png' },
+  { key: 'wheel2', file: 'wheel2.png' },
   { key: 'crate', file: 'crate.png' },
   { key: 'flag', file: 'flag.png' },
   { key: 'title', file: 'title.png' },
@@ -12,6 +14,10 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'wall', file: 'wall.png' },
   { key: 'wall-cracked', file: 'wall-cracked.png' },
   { key: 'wall-broken', file: 'wall-broken.png' },
+  { key: 'bg-level1', file: 'bg-level1.png' },
+  { key: 'bg-level2', file: 'bg-level2.png' },
+  { key: 'bg-level3', file: 'bg-level3.png' },
+  { key: 'bg-title', file: 'bg-title.png' },
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -48,6 +54,29 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x777777);
       g.fillCircle(22, 22, 6);
       g.generateTexture('wheel', 44, 44);
+    }
+
+    if (!this.textures.exists('chassis2')) {
+      // Second car placeholder — blue, so it's obviously not car 1 (or
+      // Milton's real drawing) until he draws one.
+      g.fillStyle(0x2f6fd9);
+      g.fillRoundedRect(0, 0, 120, 50, 10);
+      g.generateTexture('chassis2', 120, 50);
+      g.clear();
+    }
+
+    if (!this.textures.exists('wheel2')) {
+      g.fillStyle(0x2b2b2b);
+      g.fillCircle(22, 22, 22);
+      g.lineStyle(5, 0x9ec2f5);
+      g.beginPath();
+      g.moveTo(22, 22);
+      g.lineTo(22, 4);
+      g.strokePath();
+      g.fillStyle(0x777777);
+      g.fillCircle(22, 22, 6);
+      g.generateTexture('wheel2', 44, 44);
+      g.clear();
     }
 
     if (!this.textures.exists('crate')) {
@@ -117,6 +146,25 @@ export class BootScene extends Phaser.Scene {
     drawWall('wall-cracked', 2, false);
     drawWall('wall-broken', 3, true);
 
+    // Any level background Milton hasn't drawn yet: flat sky blue, same
+    // color as the old code-only background, so nothing looks broken.
+    // 'sky-fallback' additionally covers any level with no background key.
+    for (const key of [...SPRITES.map((s) => s.key), 'sky-fallback']) {
+      if ((key.startsWith('bg-') || key === 'sky-fallback') && !this.textures.exists(key)) {
+        g.fillStyle(0x87ceeb);
+        g.fillRect(0, 0, 64, 64);
+        g.generateTexture(key, 64, 64);
+        g.clear();
+      }
+    }
+
+    // Ghost silhouette for best-time replays (always generated — a plain
+    // shape on purpose, so it never depends on whichever car is selected).
+    g.fillStyle(0xffffff);
+    g.fillRoundedRect(0, 0, 120, 50, 10);
+    g.generateTexture('ghost-car', 120, 50);
+    g.clear();
+
     // Dust puff for wheel spin (always generated — it's a soft blob).
     g.fillStyle(0xcbb794, 0.9);
     g.fillCircle(6, 6, 6);
@@ -132,7 +180,7 @@ export class BootScene extends Phaser.Scene {
   // public/audio/. Only files that actually exist get loaded — a 404 fed
   // to the audio decoder throws. Missing sounds = silent fallbacks.
   private async loadMiltonsSounds(): Promise<void> {
-    const names = ['engine', 'crash', 'win', 'pickup'];
+    const names = ['engine', 'crash', 'win', 'pickup', 'boost'];
     const found: [string, string][] = [];
     await Promise.all(
       names.map(async (name) => {

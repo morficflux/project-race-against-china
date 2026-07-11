@@ -20,4 +20,7 @@ export const TUNABLES = {
 
   // How hard the car jumps off the ground. Bigger = moon bounce.
   jumpPower: 11,
+
+  // How hard a star launches you forward. Bigger = zoom.
+  boostPower: 9,
 };

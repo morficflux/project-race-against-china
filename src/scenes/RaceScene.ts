@@ -2,14 +2,23 @@ import Phaser from 'phaser';
 import { Car } from '../entities/Car';
 import { Destructible } from '../entities/Destructible';
 import { Pickup } from '../entities/Pickup';
+import { Ghost, type GhostSample, type GhostRun } from '../entities/Ghost';
 import { TouchControls } from '../ui/TouchControls';
+import { GamepadControls } from '../ui/GamepadControls';
 import { EngineSound } from '../systems/EngineSound';
 import { TUNABLES } from '../config';
 import { LEVELS, type LevelDef } from '../levels';
+import { CARS } from '../cars';
 
 const START = { x: 200, y: 520 };
 const WORLD_HEIGHT = 1000;
 const GROUND_THICKNESS = 40;
+// How much slower the background drifts than the foreground — the classic
+// parallax "distant things move less" feel. 0 = fixed, 1 = same as ground.
+const BG_SCROLL_FACTOR = 0.3;
+// Ghost recording rate — not every frame, just enough to replay smoothly
+// while keeping localStorage small (a ~30s run at 16Hz is ~24KB of JSON).
+const GHOST_SAMPLE_INTERVAL_MS = 60;
 
 export class RaceScene extends Phaser.Scene {
   private car!: Car;
@@ -26,18 +35,60 @@ export class RaceScene extends Phaser.Scene {
   private finishTimeS: string | null = null;
   private won = false;
   private touch: TouchControls | null = null;
+  private gamepad!: GamepadControls;
   private dust!: Phaser.GameObjects.Particles.ParticleEmitter;
+  private background!: Phaser.GameObjects.Image;
+  private backgroundBaseX = 0;
   private engine: EngineSound | null = null;
   private engineLoop: Phaser.Sound.WebAudioSound | null = null;
 
   private level: LevelDef = LEVELS[0];
+  private levelIndex = 0;
+  private carChoice = CARS[0];
+  private ghost: Ghost | null = null;
+  private ghostBestS: number | null = null;
+  private recordedSamples: GhostSample[] = [];
+  private lastSampleMs = 0;
 
   constructor() {
     super('race');
   }
 
-  init(data: { levelIndex?: number }): void {
-    this.level = LEVELS[data.levelIndex ?? 0] ?? LEVELS[0];
+  init(data: { levelIndex?: number; carIndex?: number }): void {
+    const idx = data.levelIndex ?? 0;
+    this.levelIndex = LEVELS[idx] ? idx : 0;
+    this.level = LEVELS[this.levelIndex];
+    this.carChoice = CARS[data.carIndex ?? 0] ?? CARS[0];
+  }
+
+  private ghostStorageKey(): string {
+    return `rac:ghost:${this.levelIndex}`;
+  }
+
+  /** Loads this level's saved best run (if any) as a replayable ghost. */
+  private loadGhost(): void {
+    try {
+      const raw = localStorage.getItem(this.ghostStorageKey());
+      if (!raw) return;
+      const data = JSON.parse(raw) as GhostRun;
+      if (!Array.isArray(data.samples) || data.samples.length === 0) return;
+      this.ghostBestS = data.bestTimeS;
+      this.ghost = new Ghost(this, data.samples);
+    } catch {
+      /* corrupted or blocked storage — race on without a ghost */
+    }
+  }
+
+  /** Saves this run as the new best, but only if it actually beat the
+   * stored one (or nothing was stored yet). */
+  private saveGhostIfBest(finishS: number): void {
+    if (this.ghostBestS !== null && finishS >= this.ghostBestS) return;
+    try {
+      const run: GhostRun = { bestTimeS: finishS, samples: this.recordedSamples };
+      localStorage.setItem(this.ghostStorageKey(), JSON.stringify(run));
+    } catch {
+      /* storage full/blocked — the win still counts, just isn't saved */
+    }
   }
 
   /** Rightmost ground point = how wide this level's world is. */
@@ -52,17 +103,30 @@ export class RaceScene extends Phaser.Scene {
     this.raceStartMs = null;
     this.finishTimeS = null;
     this.smashed = 0;
+    this.ghost = null;
+    this.ghostBestS = null;
+    this.recordedSamples = [];
+    this.lastSampleMs = 0;
 
+    this.buildBackground();
     this.buildGround();
     this.plantFlag(START.x - 120, 'START');
     this.plantFlag(this.level.finishX, 'FINISH');
+    this.loadGhost();
 
-    this.car = new Car(this, START.x, START.y);
+    this.car = new Car(
+      this,
+      START.x,
+      START.y,
+      this.carChoice.chassisKey,
+      this.carChoice.wheelKey,
+    );
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.spaceKey = this.input.keyboard!.addKey('SPACE');
     this.input.keyboard!.on('keydown-R', () => this.scene.restart());
     this.input.keyboard!.on('keydown-M', () => this.scene.start('menu'));
     this.setUpTouch();
+    this.gamepad = new GamepadControls(this);
 
     this.destructibles.clear();
     for (const [x, y] of this.level.crates) {
@@ -123,7 +187,15 @@ export class RaceScene extends Phaser.Scene {
     );
     // (off first: the scene emitter survives restarts, the listeners shouldn't stack)
     this.events.off('picked-up');
-    this.events.on('picked-up', () => this.stars++);
+    this.events.on('picked-up', () => {
+      this.stars++;
+      this.car.boost();
+      const at = this.car.rearWheelContact;
+      this.dust.emitParticleAt(at.x, at.y, 8);
+      if (this.cache.audio.exists('boost')) {
+        this.sound.play('boost', { detune: Phaser.Math.Between(-80, 80) });
+      }
+    });
     this.events.off('cracked');
     this.events.on('cracked', () => {
       // A wall took damage but held: smaller thud than a full smash.
@@ -283,6 +355,35 @@ export class RaceScene extends Phaser.Scene {
     return 700;
   }
 
+  private buildBackground(): void {
+    const key =
+      this.level.background && this.textures.exists(this.level.background)
+        ? this.level.background
+        : 'sky-fallback';
+    const { width: vw, height: vh } = this.scale.gameSize;
+
+    // A single (non-tiling) image, scaled to comfortably cover the whole
+    // parallax pan range for this level — never runs out and never needs
+    // to repeat, so there's no seam. Manually repositioned in update()
+    // rather than Phaser's built-in scrollFactor, to precisely match the
+    // BG_SCROLL_FACTOR math (and because a fixed-to-camera object with a
+    // computed x offset is easy to reason about and verify).
+    const img = this.textures.get(key).getSourceImage() as {
+      width: number;
+      height: number;
+    };
+    const maxScrollX = Math.max(0, this.worldWidth() - vw);
+    const minCoverWidth = vw + maxScrollX * BG_SCROLL_FACTOR;
+    const scale = Math.max(vh / img.height, minCoverWidth / img.width);
+
+    this.backgroundBaseX = vw / 2;
+    this.background = this.add
+      .image(this.backgroundBaseX, vh / 2, key)
+      .setDisplaySize(img.width * scale, img.height * scale)
+      .setScrollFactor(0, 0)
+      .setDepth(-100);
+  }
+
   private buildGround(): void {
     const pts = this.level.ground;
     for (let i = 0; i < pts.length - 1; i++) {
@@ -310,7 +411,9 @@ export class RaceScene extends Phaser.Scene {
 
   private finish(time: number): void {
     this.won = true;
-    this.finishTimeS = ((time - (this.raceStartMs ?? time)) / 1000).toFixed(1);
+    const finishS = (time - (this.raceStartMs ?? time)) / 1000;
+    this.finishTimeS = finishS.toFixed(1);
+    this.saveGhostIfBest(finishS);
     if (this.cache.audio.exists('win')) this.sound.play('win');
 
     this.add
@@ -336,13 +439,20 @@ export class RaceScene extends Phaser.Scene {
     });
   }
 
-  /** Combined throttle from keyboard and touch; last one pressed wins. */
+  /** Combined throttle from keyboard, gamepad, or touch — first non-zero wins. */
   private throttle(): number {
     const kb = this.cursors.right.isDown ? 1 : this.cursors.left.isDown ? -1 : 0;
-    return kb !== 0 ? kb : (this.touch?.throttle ?? 0);
+    if (kb !== 0) return kb;
+    const pad = this.gamepad.throttle;
+    return pad !== 0 ? pad : (this.touch?.throttle ?? 0);
   }
 
   update(time: number, delta: number): void {
+    this.background.x =
+      this.backgroundBaseX - this.cameras.main.scrollX * BG_SCROLL_FACTOR;
+    if (this.gamepad.consumeRestartPress()) this.scene.restart();
+    this.ghost?.update(this.raceStartMs === null ? null : time - this.raceStartMs);
+
     const spin = this.won ? 0 : Math.abs(this.car.wheelSpin);
     if (this.engineLoop?.isPlaying) {
       this.engineLoop.setRate(0.6 + spin * 0.6);
@@ -353,7 +463,10 @@ export class RaceScene extends Phaser.Scene {
     if (!this.won) {
       const throttle = this.throttle();
       const jump =
-        this.cursors.up.isDown || this.spaceKey.isDown || (this.touch?.jump ?? false);
+        this.cursors.up.isDown ||
+        this.spaceKey.isDown ||
+        (this.touch?.jump ?? false) ||
+        this.gamepad.jump;
       this.car.update(throttle, jump, delta);
 
       // Kick up dust while the tires are working the ground.
@@ -367,10 +480,29 @@ export class RaceScene extends Phaser.Scene {
         this.raceStartMs = time;
       }
 
+      // Ghost recording: a sample every ~60ms of race time, not every frame.
+      if (this.raceStartMs !== null) {
+        const sinceStart = time - this.raceStartMs;
+        if (
+          this.recordedSamples.length === 0 ||
+          sinceStart - this.lastSampleMs >= GHOST_SAMPLE_INTERVAL_MS
+        ) {
+          this.recordedSamples.push({
+            t: sinceStart,
+            x: this.car.chassis.x,
+            y: this.car.chassis.y,
+            angle: this.car.chassis.rotation,
+          });
+          this.lastSampleMs = sinceStart;
+        }
+      }
+
       const elapsed =
         this.raceStartMs === null ? 0 : (time - this.raceStartMs) / 1000;
+      const ghostSuffix =
+        this.ghostBestS !== null ? `   ghost ${this.ghostBestS.toFixed(1)}s` : '';
       this.hud.setText(
-        `time ${elapsed.toFixed(1)}s   smashed ${this.smashed}   ⭐ ${this.stars}/${this.starsTotal}`,
+        `time ${elapsed.toFixed(1)}s   smashed ${this.smashed}   ⭐ ${this.stars}/${this.starsTotal}${ghostSuffix}`,
       );
 
       if (this.car.chassis.x >= this.level.finishX) this.finish(time);
