@@ -51,7 +51,25 @@ name ("Crate Country" vs. "Danger Mountain").
 - `src/scenes/MenuScene.ts`: **added 2026-07-11** — a title-screen
   background (`bg-title`, cover-fit to the 1280x720 canvas, no parallax
   needed since the menu doesn't scroll). Not part of the original spec, but
-  the same pipeline/pattern and Milton wanted one.
+  the same pipeline/pattern and Milton wanted one. A translucent white wash
+  (55%) sits over it so the subtitle/labels stay readable against busy art.
+- **Performance fix, 2026-07-11**: once all four backgrounds were real
+  art, initial load became noticeably slow. Root cause: the four
+  backgrounds totaled ~30.7MB as PNG — full-bleed photographic crayon
+  texture is exactly what PNG (lossless) compresses badly and JPEG (lossy)
+  compresses well, and all four were being loaded eagerly during boot
+  before the menu even appeared, even though only one level's background
+  is ever on screen at a time. Two fixes: (1) `--opaque` mode now writes
+  `.jpg` instead of `.png` (opaque art never needs transparency, so
+  there's no downside) — same four images at quality 82 dropped to
+  ~2.3MB total, a 92% reduction, with no visible quality loss; (2) level
+  backgrounds moved out of `BootScene`'s eager manifest entirely — only
+  `bg-title` loads at boot now, and `RaceScene` gained its own `preload()`
+  that lazily loads just the chosen level's background (skipped entirely
+  if already cached from an earlier visit this session). Verified via
+  network request tracking: boot fetches only `bg-title.jpg`; picking a
+  level fetches only that level's background, never the other two;
+  revisiting an already-loaded level makes zero additional requests.
 
 ## Acceptance criteria
 

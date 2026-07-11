@@ -61,6 +61,17 @@ export class RaceScene extends Phaser.Scene {
     this.carChoice = CARS[data.carIndex ?? 0] ?? CARS[0];
   }
 
+  // Level backgrounds are big images and only one is ever on screen —
+  // loaded lazily here (not in BootScene's eager manifest) so picking
+  // level 1 doesn't also download levels 2 and 3's art. Already-cached
+  // (revisited/restarted level) skips straight through.
+  preload(): void {
+    const key = this.level.background;
+    if (key && !this.textures.exists(key)) {
+      this.load.image(key, `sprites/${key}.jpg`);
+    }
+  }
+
   private ghostStorageKey(): string {
     return `rac:ghost:${this.levelIndex}`;
   }

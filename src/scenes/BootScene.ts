@@ -14,10 +14,11 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'wall', file: 'wall.png' },
   { key: 'wall-cracked', file: 'wall-cracked.png' },
   { key: 'wall-broken', file: 'wall-broken.png' },
-  { key: 'bg-level1', file: 'bg-level1.png' },
-  { key: 'bg-level2', file: 'bg-level2.png' },
-  { key: 'bg-level3', file: 'bg-level3.png' },
-  { key: 'bg-title', file: 'bg-title.png' },
+  { key: 'bg-title', file: 'bg-title.jpg' },
+  // Level backgrounds (bg-level1/2/3) are NOT here on purpose — they're
+  // large images, and only one is ever needed at a time. RaceScene loads
+  // its own level's background lazily in its preload(), so picking level 1
+  // never downloads levels 2 and 3's art too.
 ];
 
 export class BootScene extends Phaser.Scene {
@@ -146,16 +147,14 @@ export class BootScene extends Phaser.Scene {
     drawWall('wall-cracked', 2, false);
     drawWall('wall-broken', 3, true);
 
-    // Any level background Milton hasn't drawn yet: flat sky blue, same
-    // color as the old code-only background, so nothing looks broken.
-    // 'sky-fallback' additionally covers any level with no background key.
-    for (const key of [...SPRITES.map((s) => s.key), 'sky-fallback']) {
-      if ((key.startsWith('bg-') || key === 'sky-fallback') && !this.textures.exists(key)) {
-        g.fillStyle(0x87ceeb);
-        g.fillRect(0, 0, 64, 64);
-        g.generateTexture(key, 64, 64);
-        g.clear();
-      }
+    // Flat sky blue — RaceScene falls back to this if a level's background
+    // hasn't been drawn yet, or hasn't finished loading. Same color as the
+    // old code-only background, so nothing looks broken.
+    if (!this.textures.exists('sky-fallback')) {
+      g.fillStyle(0x87ceeb);
+      g.fillRect(0, 0, 64, 64);
+      g.generateTexture('sky-fallback', 64, 64);
+      g.clear();
     }
 
     // Ghost silhouette for best-time replays (always generated — a plain

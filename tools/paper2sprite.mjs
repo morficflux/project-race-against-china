@@ -191,11 +191,16 @@ if (top < 0 || left < 0 || right <= left || bottom <= top) {
   process.exit(1);
 }
 
-const out = path.join('public', 'sprites', `${name}.png`);
-await sharp(rgba, { raw: { width, height, channels: 4 } })
+// --opaque images (backgrounds) have no transparency and are full-bleed
+// photographic crayon/marker texture — exactly what JPEG is good at and
+// PNG is bad at (PNG is lossless, so per-pixel photo noise barely
+// compresses; JPEG's lossy encoding shrinks the same image by ~90%+).
+// Everything else keeps PNG for real transparency.
+const ext = opaque ? 'jpg' : 'png';
+const out = path.join('public', 'sprites', `${name}.${ext}`);
+const cropped = sharp(rgba, { raw: { width, height, channels: 4 } })
   .extract({ left, top, width: right - left + 1, height: bottom - top + 1 })
-  .resize({ width: targetWidth })
-  .png()
-  .toFile(out);
+  .resize({ width: targetWidth });
+await (opaque ? cropped.jpeg({ quality: 82 }) : cropped.png()).toFile(out);
 
 console.log(`✔ wrote ${out} (${targetWidth}px wide) — refresh the game to see it`);
