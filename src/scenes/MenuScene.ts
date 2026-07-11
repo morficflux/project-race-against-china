@@ -28,6 +28,9 @@ export class MenuScene extends Phaser.Scene {
         .image(640, 360, 'bg-title')
         .setDisplaySize(img.width * scale, img.height * scale)
         .setDepth(-100);
+      // Wash it out a bit — full-strength crayon competes with the dark
+      // text on top (title logo aside, which has its own solid backing).
+      this.add.rectangle(640, 360, 1280, 720, 0xffffff, 0.55).setDepth(-99);
     }
 
     // Milton can draw the game logo: npm run sprite -- <photo> title 700

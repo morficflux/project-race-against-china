@@ -9,6 +9,11 @@
   branch named for it (`v3`), merged into `main` only when the version is
   signed off. `main` auto-deploys to GitHub Pages, so `main` = the live,
   signed-off game. (v1, v2, and spec 010 predate this rule.)
+- **Peer review before merging to main:** run a code review (`/code-review`
+  on the version branch's diff) before merging a version branch into
+  `main`. Sign-off from Milton covers gameplay/feel; the review is a
+  separate, code-quality pass — do both before merging. (v4 and earlier
+  predate this rule.)
 - Milton (age 7) is the art director and game designer: hand-drawn art via
   `npm run sprite`, sounds via `/booth.html`, tunables in `src/config.ts`,
   levels in `src/levels/`. Acceptance boxes naming Milton are his to check.
