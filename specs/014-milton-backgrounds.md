@@ -1,7 +1,7 @@
 # Spec 014: Milton's backgrounds (v4)
 
-**Status:** built (verified headless 2026-07-05; awaiting Milton's actual
-drawings — flat sky-blue fallback stands in until then)
+**Status:** verified 2026-07-11 — all three levels have Milton's real
+backgrounds, plus a title-screen background as a bonus
 
 ## What
 
@@ -36,24 +36,37 @@ name ("Crate Country" vs. "Danger Mountain").
   gets a flat sky-blue placeholder texture generated in code, matching the
   game's original background color exactly, so nothing looks broken before
   Milton draws anything.
-- `src/scenes/RaceScene.ts`: a `Phaser.GameObjects.TileSprite` (not a scaled
-  fixed image — levels are variable width, a single image would run out or
-  repeat oddly on longer courses), sized to the camera viewport,
-  `setScrollFactor(0, 0)`, `setDepth(-100)` so it always renders behind
-  ground/car/HUD regardless of add order. Each `update()`, its
-  `tilePositionX` is driven by `camera.scrollX * 0.3` — the parallax feel
-  (background drifts slower than the foreground).
+- `src/scenes/RaceScene.ts`: originally a `Phaser.GameObjects.TileSprite`
+  with `tilePositionX` driven by `scrollX * 0.3`. **Revised 2026-07-11**:
+  once real art landed, the tiling approach turned out to have a real bug —
+  the tile sprite's display size exactly matched the viewport, so *any*
+  nonzero scroll immediately showed a seam (the art wrapping around
+  mid-image, since these are one-off illustrations, not seamless repeating
+  textures). Replaced with a plain `Image`, generated wide enough
+  (`vw + maxScrollX * 0.3`, computed per level from `worldWidth()`) that it
+  never needs to repeat at all — regenerated all three background sprites
+  at 2200px (up from 1280px) to guarantee coverage. Manually repositioned
+  each frame (`x = baseX - scrollX * 0.3`) rather than Phaser's built-in
+  `setScrollFactor`, to keep the exact same math that was already verified.
+- `src/scenes/MenuScene.ts`: **added 2026-07-11** — a title-screen
+  background (`bg-title`, cover-fit to the 1280x720 canvas, no parallax
+  needed since the menu doesn't scroll). Not part of the original spec, but
+  the same pipeline/pattern and Milton wanted one.
 
 ## Acceptance criteria
 
 - [x] Background renders behind everything (verified `depth === -100`,
       confirmed visually — ground, car, flags all draw on top)
 - [x] Background scrolls slower than the foreground as the camera follows
-      the car (verified `tilePositionX` tracks `scrollX * 0.3` on both
-      levels; a flat placeholder color looks identical whether or not it's
-      scrolling, so this was checked numerically, not just visually)
-- [x] Missing background art never breaks the game (both levels currently
-      run on the generated flat-sky fallback with zero exceptions)
-- [ ] Milton has drawn a background for Crate Country
-- [ ] Milton has drawn a background for Danger Mountain (or its eventual
-      redesign, spec 017)
+      the car — re-verified after the tiling→single-image fix with real
+      art: on Danger Mountain (the widest level), driving for 10s scrolled
+      the START flag almost entirely off-screen while the mountain peaks
+      barely moved; background position tracked `scrollX * 0.3` within
+      one frame of camera-lerp lag (~1px), and coverage math confirmed the
+      image's edges always extend well past the viewport at both scroll
+      extremes, so no seam or gap is possible at any point in any level
+- [x] Missing background art never breaks the game (flat-sky fallback,
+      zero exceptions — still true, just no longer needed for any level)
+- [x] Milton has drawn a background for Crate Country
+- [x] Milton has drawn a background for Danger Mountain
+- [x] Milton has drawn a background for Milton's Track (spec 017)

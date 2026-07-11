@@ -16,6 +16,20 @@ export class MenuScene extends Phaser.Scene {
     this.selectedCar = 0;
     this.carFrames = [];
 
+    // Milton's title screen background (npm run sprite -- <photo> bg-title
+    // 1400 --opaque). Cover-fit to the 1280x720 canvas.
+    if (this.textures.exists('bg-title')) {
+      const img = this.textures.get('bg-title').getSourceImage() as {
+        width: number;
+        height: number;
+      };
+      const scale = Math.max(1280 / img.width, 720 / img.height);
+      this.add
+        .image(640, 360, 'bg-title')
+        .setDisplaySize(img.width * scale, img.height * scale)
+        .setDepth(-100);
+    }
+
     // Milton can draw the game logo: npm run sprite -- <photo> title 700
     let subtitleY = 245;
     if (this.textures.exists('title')) {

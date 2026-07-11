@@ -41,5 +41,7 @@ the level format supports pickups, walls, and a background (specs
 - [x] Level 3 is beatable start-to-finish on its placeholder terrain
       (verified headless: full course drive collects the pickup, smashes
       the crate, and reaches the finish flag — 100% completion)
+- [x] Milton has drawn level 3's background (a lakeside scene, complete
+      with Pikachu and friends) — see spec 014
 - [ ] Milton has designed level 3's real shape (paper sketch in `art/inbox`
-      counts) and drawn its background
+      counts) — the terrain is still the minimal placeholder scaffolding

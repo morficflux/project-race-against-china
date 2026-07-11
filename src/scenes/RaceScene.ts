@@ -37,7 +37,8 @@ export class RaceScene extends Phaser.Scene {
   private touch: TouchControls | null = null;
   private gamepad!: GamepadControls;
   private dust!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private background!: Phaser.GameObjects.TileSprite;
+  private background!: Phaser.GameObjects.Image;
+  private backgroundBaseX = 0;
   private engine: EngineSound | null = null;
   private engineLoop: Phaser.Sound.WebAudioSound | null = null;
 
@@ -359,10 +360,26 @@ export class RaceScene extends Phaser.Scene {
       this.level.background && this.textures.exists(this.level.background)
         ? this.level.background
         : 'sky-fallback';
-    const { width, height } = this.scale.gameSize;
+    const { width: vw, height: vh } = this.scale.gameSize;
+
+    // A single (non-tiling) image, scaled to comfortably cover the whole
+    // parallax pan range for this level — never runs out and never needs
+    // to repeat, so there's no seam. Manually repositioned in update()
+    // rather than Phaser's built-in scrollFactor, to precisely match the
+    // BG_SCROLL_FACTOR math (and because a fixed-to-camera object with a
+    // computed x offset is easy to reason about and verify).
+    const img = this.textures.get(key).getSourceImage() as {
+      width: number;
+      height: number;
+    };
+    const maxScrollX = Math.max(0, this.worldWidth() - vw);
+    const minCoverWidth = vw + maxScrollX * BG_SCROLL_FACTOR;
+    const scale = Math.max(vh / img.height, minCoverWidth / img.width);
+
+    this.backgroundBaseX = vw / 2;
     this.background = this.add
-      .tileSprite(0, 0, width, height, key)
-      .setOrigin(0, 0)
+      .image(this.backgroundBaseX, vh / 2, key)
+      .setDisplaySize(img.width * scale, img.height * scale)
       .setScrollFactor(0, 0)
       .setDepth(-100);
   }
@@ -431,7 +448,8 @@ export class RaceScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
-    this.background.tilePositionX = this.cameras.main.scrollX * BG_SCROLL_FACTOR;
+    this.background.x =
+      this.backgroundBaseX - this.cameras.main.scrollX * BG_SCROLL_FACTOR;
     if (this.gamepad.consumeRestartPress()) this.scene.restart();
     this.ghost?.update(this.raceStartMs === null ? null : time - this.raceStartMs);
 
