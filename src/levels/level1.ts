@@ -52,5 +52,12 @@ export const LEVEL1: LevelDef = {
   // Brick walls take THREE hits: crack, crack more, SMASH.
   walls: [[2950, 600]],
 
+  // Boulders are single-hit, like crates — just a different look.
+  boulders: [
+    [400, 600],
+    [1550, 560],
+    [2650, 620],
+  ],
+
   finishX: 3150,
 };

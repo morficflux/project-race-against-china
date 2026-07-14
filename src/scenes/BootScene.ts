@@ -8,6 +8,7 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'chassis2', file: 'car2.png' },
   { key: 'wheel2', file: 'wheel2.png' },
   { key: 'crate', file: 'crate.png' },
+  { key: 'boulder', file: 'boulder.png' },
   { key: 'flag', file: 'flag.png' },
   { key: 'title', file: 'title.png' },
   { key: 'pickup', file: 'pickup.png' },
@@ -89,6 +90,25 @@ export class BootScene extends Phaser.Scene {
       g.lineBetween(3, 3, 77, 77);
       g.lineBetween(77, 3, 3, 77);
       g.generateTexture('crate', 80, 80);
+    }
+
+    if (!this.textures.exists('boulder')) {
+      // Grey rock with a couple of crack lines.
+      g.fillStyle(0x8a8a8a);
+      g.fillCircle(40, 40, 38);
+      g.lineStyle(4, 0x5f5f5f);
+      g.beginPath();
+      g.moveTo(20, 22);
+      g.lineTo(38, 44);
+      g.lineTo(30, 62);
+      g.strokePath();
+      g.beginPath();
+      g.moveTo(55, 18);
+      g.lineTo(48, 40);
+      g.lineTo(62, 55);
+      g.strokePath();
+      g.generateTexture('boulder', 80, 80);
+      g.clear();
     }
 
     if (!this.textures.exists('flag')) {

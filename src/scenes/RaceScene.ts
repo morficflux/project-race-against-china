@@ -144,6 +144,11 @@ export class RaceScene extends Phaser.Scene {
       const crate = new Destructible(this, x, y, 'crate');
       this.destructibles.set(crate.body.id, crate);
     }
+    // Boulders are single-hit, like crates — just a different look.
+    for (const [x, y] of this.level.boulders ?? []) {
+      const boulder = new Destructible(this, x, y, 'boulder');
+      this.destructibles.set(boulder.body.id, boulder);
+    }
     // Walls take three hits, cracking visibly between them.
     for (const [x, y] of this.level.walls ?? []) {
       const wall = new Destructible(this, x, y, 'wall', {
