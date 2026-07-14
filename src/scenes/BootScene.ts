@@ -9,6 +9,7 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'wheel2', file: 'wheel2.png' },
   { key: 'crate', file: 'crate.png' },
   { key: 'boulder', file: 'boulder.png' },
+  { key: 'road', file: 'road.jpg' },
   { key: 'flag', file: 'flag.png' },
   { key: 'title', file: 'title.png' },
   { key: 'pickup', file: 'pickup.png' },
@@ -108,6 +109,14 @@ export class BootScene extends Phaser.Scene {
       g.lineTo(62, 55);
       g.strokePath();
       g.generateTexture('boulder', 80, 80);
+      g.clear();
+    }
+
+    if (!this.textures.exists('road')) {
+      // Flat green — same color the ground has always been.
+      g.fillStyle(0x3d8c40);
+      g.fillRect(0, 0, 64, 40);
+      g.generateTexture('road', 64, 40);
       g.clear();
     }
 

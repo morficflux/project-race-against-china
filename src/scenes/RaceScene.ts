@@ -410,6 +410,15 @@ export class RaceScene extends Phaser.Scene {
 
   private buildGround(): void {
     const pts = this.level.ground;
+    // Milton's road art tiles at whatever pixel resolution he drew it at —
+    // scale it uniformly so it fits the ground's actual thickness instead
+    // of being stretched/cropped. Same scale for both axes so the art
+    // isn't distorted; the horizontal repeat period just follows from it.
+    const roadImg = this.textures.get('road').getSourceImage() as {
+      height: number;
+    };
+    const tileScale = GROUND_THICKNESS / roadImg.height;
+
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i];
       const b = pts[i + 1];
@@ -424,7 +433,8 @@ export class RaceScene extends Phaser.Scene {
       const cy = (y1 + y2) / 2 + Math.cos(angle) * (GROUND_THICKNESS / 2);
 
       const slab = this.add
-        .rectangle(cx, cy, length, GROUND_THICKNESS, 0x3d8c40)
+        .tileSprite(cx, cy, length, GROUND_THICKNESS, 'road')
+        .setTileScale(tileScale, tileScale)
         .setRotation(angle);
       this.matter.add.gameObject(slab, { isStatic: true, friction: 1 });
       // Attaching the body resets rotation to 0 — rotate the body itself.
