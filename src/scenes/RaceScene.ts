@@ -393,6 +393,14 @@ export class RaceScene extends Phaser.Scene {
       .setDisplaySize(img.width * scale, img.height * scale)
       .setScrollFactor(0, 0)
       .setDepth(-100);
+
+    // Wash it out — full-strength crayon behind the car/obstacles/HUD is
+    // too busy. Fixed to the screen (not the background image itself),
+    // since it just needs to sit between the two at all times.
+    this.add
+      .rectangle(vw / 2, vh / 2, vw, vh, 0xffffff, 0.7)
+      .setScrollFactor(0, 0)
+      .setDepth(-99);
   }
 
   private buildGround(): void {
