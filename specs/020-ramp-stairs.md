@@ -57,7 +57,13 @@ shapes.
       the incline, `vx` stays healthy throughout, no stutter/flip)
 - [x] Neither prop is destructible (verified: `smashed` count stayed at
       0 driving through both at speed)
-- [x] Milton has drawn the ramp and stairs art
+- [x] Stairs art: Milton's drawing came through the pipeline as a solid
+      silhouette, looks right in-game.
+- [ ] Ramp art: Milton's drawing was an outline that didn't get filled in
+      (paper2sprite keyed the unfilled interior transparent along with
+      the paper), so it renders as a thin squiggle rather than a wedge.
+      Shipped with the code-drawn placeholder wedge instead — needs
+      Milton to redraw the ramp filled in, then reprocess.
 
 ## Bug found & fixed during verification
 
