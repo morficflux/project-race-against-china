@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Car } from '../entities/Car';
 import { Destructible } from '../entities/Destructible';
 import { Pickup } from '../entities/Pickup';
+import { Ramp } from '../entities/Ramp';
 import { Ghost, type GhostSample, type GhostRun } from '../entities/Ghost';
 import { TouchControls } from '../ui/TouchControls';
 import { GamepadControls } from '../ui/GamepadControls';
@@ -158,6 +159,14 @@ export class RaceScene extends Phaser.Scene {
         stages: ['wall', 'wall-cracked', 'wall-broken'],
       });
       this.destructibles.set(wall.body.id, wall);
+    }
+    // Ramps and stairs are static — not tracked in destructibles, they
+    // don't break.
+    for (const [x, y] of this.level.ramps ?? []) {
+      new Ramp(this, x, y, 'ramp');
+    }
+    for (const [x, y] of this.level.stairs ?? []) {
+      new Ramp(this, x, y, 'stairs');
     }
 
     // Sparkle burst for collecting (little spinning stars).

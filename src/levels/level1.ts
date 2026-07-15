@@ -59,5 +59,10 @@ export const LEVEL1: LevelDef = {
     [2650, 620],
   ],
 
+  // Ramps/stairs: [x,y] is the prop's LOW end, on the ground line — same
+  // convention as a ground point (see spec 020).
+  ramps: [[1200, 697]],
+  stairs: [[2060, 754]],
+
   finishX: 3150,
 };

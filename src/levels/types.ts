@@ -12,6 +12,10 @@ export interface LevelDef {
   walls?: [number, number][];
   /** Boulders — single-hit, like crates (Milton draws boulder.png). */
   boulders?: [number, number][];
+  /** Launch ramps — fixed size/angle, placed by their low (left) end. */
+  ramps?: [number, number][];
+  /** Same smooth incline as a ramp, stair-look art (no real steps). */
+  stairs?: [number, number][];
   /** Sprite key for this level's parallax background (Milton draws one per
    * level). Falls back to the flat sky color if not set/not drawn yet. */
   background?: string;

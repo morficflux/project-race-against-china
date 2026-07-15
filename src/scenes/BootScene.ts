@@ -10,6 +10,8 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'crate', file: 'crate.png' },
   { key: 'boulder', file: 'boulder.png' },
   { key: 'road', file: 'road.jpg' },
+  { key: 'ramp', file: 'ramp.png' },
+  { key: 'stairs', file: 'stairs.png' },
   { key: 'flag', file: 'flag.png' },
   { key: 'title', file: 'title.png' },
   { key: 'pickup', file: 'pickup.png' },
@@ -117,6 +119,37 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x3d8c40);
       g.fillRect(0, 0, 64, 40);
       g.generateTexture('road', 64, 40);
+      g.clear();
+    }
+
+    if (!this.textures.exists('ramp')) {
+      // Brown wedge — matches RAMP_DEFAULTS.ramp's 220x90 proportions.
+      g.fillStyle(0x9c6b3f);
+      g.lineStyle(4, 0x5f3f22);
+      const pts = [
+        { x: 0, y: 110 },
+        { x: 220, y: 110 },
+        { x: 220, y: 20 },
+      ];
+      g.fillPoints(pts, true);
+      g.strokePoints(pts, true);
+      g.generateTexture('ramp', 220, 110);
+      g.clear();
+    }
+
+    if (!this.textures.exists('stairs')) {
+      // Crude ascending steps — matches RAMP_DEFAULTS.stairs's 220x110.
+      g.fillStyle(0x9c6b3f);
+      g.lineStyle(3, 0x5f3f22);
+      const stepCount = 4;
+      for (let i = 0; i < stepCount; i++) {
+        const stepW = 220 / stepCount;
+        const stepH = (110 / stepCount) * (i + 1);
+        const x = i * stepW;
+        g.fillRect(x, 110 - stepH, stepW + 2, stepH);
+        g.strokeRect(x, 110 - stepH, stepW + 2, stepH);
+      }
+      g.generateTexture('stairs', 220, 110);
       g.clear();
     }
 
