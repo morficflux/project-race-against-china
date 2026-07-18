@@ -37,5 +37,8 @@ track using the same "smash stuff" mechanic that already works well.
 - [x] A gentle touch pushes it without breaking it (verified with a
       speed-regulated creep approach — same technique used for crates —
       boulder count stayed at 3)
-- [ ] Milton has drawn the boulder art (grey circle-with-cracks
-      placeholder stands in for now)
+- [x] Milton has drawn the boulder art
+
+**Superseded:** spec 022 changes boulders from single-hit to a 3-stage
+crack/break sequence (matching walls) once Milton drew a matched
+whole/cracked/rubble art set. See spec 022 for the updated behavior.

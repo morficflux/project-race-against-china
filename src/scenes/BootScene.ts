@@ -9,6 +9,8 @@ const SPRITES: { key: string; file: string }[] = [
   { key: 'wheel2', file: 'wheel2.png' },
   { key: 'crate', file: 'crate.png' },
   { key: 'boulder', file: 'boulder.png' },
+  { key: 'boulder-cracked', file: 'boulder-cracked.png' },
+  { key: 'boulder-broken', file: 'boulder-broken.png' },
   { key: 'road', file: 'road.jpg' },
   { key: 'ramp', file: 'ramp.png' },
   { key: 'stairs', file: 'stairs.png' },
@@ -111,6 +113,42 @@ export class BootScene extends Phaser.Scene {
       g.lineTo(62, 55);
       g.strokePath();
       g.generateTexture('boulder', 80, 80);
+      g.clear();
+    }
+
+    if (!this.textures.exists('boulder-cracked')) {
+      // Same rock, split by one wide crack through the middle.
+      g.fillStyle(0x8a8a8a);
+      g.fillCircle(40, 40, 38);
+      g.fillStyle(0x87ceeb);
+      g.beginPath();
+      g.moveTo(38, 4);
+      g.lineTo(46, 40);
+      g.lineTo(36, 76);
+      g.lineTo(30, 76);
+      g.lineTo(40, 40);
+      g.lineTo(32, 4);
+      g.closePath();
+      g.fill();
+      g.generateTexture('boulder-cracked', 80, 80);
+      g.clear();
+    }
+
+    if (!this.textures.exists('boulder-broken')) {
+      // Scattered rubble chunks.
+      g.fillStyle(0x8a8a8a);
+      const chunks = [
+        [16, 20, 12],
+        [40, 14, 10],
+        [62, 24, 11],
+        [22, 50, 10],
+        [46, 48, 13],
+        [66, 54, 9],
+        [34, 68, 9],
+        [55, 70, 8],
+      ];
+      for (const [cx, cy, r] of chunks) g.fillCircle(cx, cy, r);
+      g.generateTexture('boulder-broken', 80, 80);
       g.clear();
     }
 
