@@ -68,7 +68,10 @@ export const LEVEL3: LevelDef = {
   ],
 
   walls: [
-    [2150, 600],
+    // Moved from 2150 — that overlapped the stairs' own body (stairs at
+    // [1950,693] extends to x≈2188), leaving the wall spawning partially
+    // embedded in it. 2280 is clear of the stairs with margin.
+    [2280, 600],
     [4250, 600],
   ],
 
@@ -83,7 +86,7 @@ export const LEVEL3: LevelDef = {
     [500, 600],
     [1550, 600],
     [1780, 530], // on the dead-end spur — grab it before you fall back
-    [2100, 530], // over the wall
+    [2280, 530], // over the wall
     [2750, 550], // over the fork gap — risk/reward
     [3000, 570], // top route landing
     [3950, 600],

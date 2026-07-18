@@ -10,7 +10,8 @@ export interface LevelDef {
   pickups?: [number, number][];
   /** Brick walls that take 3 hits (Milton draws the damage stages). */
   walls?: [number, number][];
-  /** Boulders — single-hit, like crates (Milton draws boulder.png). */
+  /** Boulders — 3 hits, cracking then breaking to rubble, like walls
+   * (Milton draws boulder.png/boulder-cracked.png/boulder-broken.png). */
   boulders?: [number, number][];
   /** Launch ramps — fixed size/angle, placed by their low (left) end. */
   ramps?: [number, number][];

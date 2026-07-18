@@ -24,6 +24,17 @@ Milton wants boulders to feel more substantial to smash through (matching
 walls) rather than popping in one hit like a crate, and wants his own
 ramp art in the game instead of the code-drawn placeholder.
 
+**Scope note:** the `health: 3` change is in `RaceScene.ts`'s boulder
+spawn loop, so it applies to every level with a `boulders` array — not
+just the new level3 content, but level1's existing three boulders too
+(`src/levels/level1.ts`), which were tuned and signed off under the old
+single-hit design. This wasn't explicitly called out when the change was
+made; flagging it here since it quietly makes level1 harder as a side
+effect. Given Milton's own stated preference (asked directly: "should
+boulders take multiple hits like the walls do?" — yes), this seems like
+the intended outcome rather than a mistake, but it's worth Milton
+noticing when he replays level1.
+
 ## How
 
 - `src/scenes/RaceScene.ts`: boulder spawn loop now passes

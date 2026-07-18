@@ -79,6 +79,25 @@ a good candidate for spec 024+, ideally verified on a less loaded
 machine or via geometry-only checks plus Milton's own hands-on
 playtesting rather than more headless driving here.
 
+## Bugs found during review
+
+- **Wall overlapping stairs.** The wall at `[2150,600]` physically
+  overlapped the stairs prop's own body (stairs at `[1950,693]` extends
+  to x≈2188) — Matter body inspection showed a real ~51×7px overlap
+  region. Moved the wall to `[2280,600]`, clear of the stairs with
+  margin, and moved its paired pickup to match.
+- **`Car.ts`'s `isOnGround` doesn't exclude sensor bodies.** Discovered
+  while verifying the fork: driving through a pickup star (a sensor
+  body, `setSensor(true)`) sets `groundedFrames` exactly like landing on
+  real ground, since the `collisionactive` listener checks only "is this
+  a wheel's collision pair," not whether the other body is a sensor.
+  This is pre-existing (not introduced by this diff) and out of scope
+  here — it affects every level with pickups, including level1/level2 —
+  but it produced a false "landed" reading during this level's testing
+  and is worth its own follow-up spec: a mid-air jump-rearm exploit is
+  possible by clipping a pickup, and it's a one-line fix
+  (`!pair.bodyA.isSensor && !pair.bodyB.isSensor`).
+
 ## Acceptance criteria
 
 - [x] Level is noticeably longer than level1/level2 (finishX 4750 vs
@@ -86,12 +105,23 @@ playtesting rather than more headless driving here.
 - [x] Level is harder: tightly-packed 3-hit boulders, a wall, stairs, a
       300px ramp-jump, more pickups (9) than any other level
 - [x] Has a top/bottom fork where one route is real and the other is a
-      dead end (verified via direct Matter body inspection: the gap has
-      no floor, confirmed no accidental catch body between the ramp's
-      end and the top route's start)
-- [x] The level is completable (the top route only reuses the
-      already-shipped ramp-over-gap pattern, sized like level2's largest
-      existing gap)
+      dead end (verified two ways: direct Matter body inspection
+      confirmed no accidental catch body in the gap, and driving it —
+      see the completability box below)
+- [x] The level is completable (verified by actually driving the fork:
+      reset well before the ramp, held throttle for a realistic 400px
+      run-up, and let physics run continuously through the jump — the
+      car was still *rising* when it entered the gap, comfortably
+      cleared it, and landed on the top route with real margin (85px of
+      clearance above the surface well past the landing zone). A first
+      pass at this check used a synthetic mid-flight snapshot with
+      guessed velocity/position that showed the jump falling short —
+      that turned out to be wrong assumed conditions in the test, not a
+      real problem; the corrected end-to-end drive superseded it. Also
+      confirmed during this same review that a pickup positioned over
+      the gap sits directly in the natural arc and adds a reliable
+      boost, but the un-boosted portion of the trajectory alone was
+      already climbing/clearing before reaching it.)
 - [x] Has at least one non-punishing dead end (the elevated spur —
       verified headless: driving off its end produces a clean fall,
       landing back on the main path, not a stuck state)
